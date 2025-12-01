@@ -1,0 +1,129 @@
+### Droppio Backend API Testing
+### Use with REST Client extension in VS Code or similar tool
+
+@baseUrl = http://localhost:5000
+@token = your_access_token_here
+@refreshToken = your_refresh_token_here
+@streamId = your_stream_id_here
+@streamerId = your_streamer_id_here
+
+### 1. Health Check
+GET {{baseUrl}}/health
+
+### 2. Login (Replace with real wallet signature)
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "walletAddress": "0x1234567890123456789012345678901234567890",
+  "signature": "0x...",
+  "message": "Sign in to Droppio",
+  "role": "viewer"
+}
+
+### 3. Refresh Token
+POST {{baseUrl}}/api/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
+
+### 4. Get User Profile
+GET {{baseUrl}}/api/users/me
+Authorization: Bearer {{token}}
+
+### 5. Onboard User
+POST {{baseUrl}}/api/users/onboard
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "role": "streamer",
+  "displayName": "My Streamer Name",
+  "avatarUrl": "https://example.com/avatar.jpg",
+  "platform": "twitch",
+  "payoutWallet": "0x1234567890123456789012345678901234567890"
+}
+
+### 6. Start Stream (Streamer only)
+POST {{baseUrl}}/api/streams/start
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "platform": "twitch",
+  "streamKey": "your_stream_key_here"
+}
+
+### 7. Get Stream by ID
+GET {{baseUrl}}/api/streams/{{streamId}}
+
+### 8. Get Active Stream
+GET {{baseUrl}}/api/streams/active/{{streamerId}}
+
+### 9. Send Tip (Viewer only, stream must be live)
+POST {{baseUrl}}/api/tips/send
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "streamId": "{{streamId}}",
+  "amountUsdc": "10.5",
+  "signature": "0x...",
+  "message": "Tip message",
+  "txHash": "0x1234567890abcdef..."
+}
+
+### 10. Get Overlay Config
+GET {{baseUrl}}/api/overlay/{{streamerId}}/config
+Authorization: Bearer {{token}}
+
+### 11. Update Overlay Config (Streamer only, must be owner)
+PATCH {{baseUrl}}/api/overlay/{{streamerId}}/config
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "theme": {
+    "primaryColor": "#FF0000",
+    "secondaryColor": "#00FF00",
+    "fontFamily": "Arial",
+    "fontSize": 16
+  },
+  "alertSettings": {
+    "enabled": true,
+    "soundEnabled": true,
+    "minAmount": "5.0",
+    "showDuration": 3000
+  }
+}
+
+### 12. End Stream (Streamer only)
+POST {{baseUrl}}/api/streams/end
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "streamId": "{{streamId}}"
+}
+
+### 13. Logout
+POST {{baseUrl}}/api/auth/logout
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
+
+### Error Testing - Missing Token
+GET {{baseUrl}}/api/users/me
+
+### Error Testing - Invalid Token
+GET {{baseUrl}}/api/users/me
+Authorization: Bearer invalid_token_here
+
+### Error Testing - Invalid Stream ID
+GET {{baseUrl}}/api/streams/invalid-id-here
+

@@ -1,0 +1,28 @@
+import { Router } from 'express';
+import { authenticateToken } from '../middleware/auth.middleware';
+import { userController } from '../controllers/user.controller';
+import { validate } from '../middleware/validate.middleware';
+import { z } from 'zod';
+import { UserRoleSchema, PlatformSchema } from '../types/user';
+
+const router = Router();
+
+// POST /users/onboard
+// Requires authentication
+// Body: { role, displayName?, avatarUrl?, platform?, payoutWallet? }
+const onboardSchema = z.object({
+  body: z.object({
+    role: UserRoleSchema,
+    displayName: z.string().optional(),
+    avatarUrl: z.string().url().optional(),
+    platform: PlatformSchema.optional(),
+    payoutWallet: z.string().regex(/^0x[a-fA-F0-9]{40}$/).optional(),
+  }),
+});
+router.post('/onboard', authenticateToken, validate(onboardSchema), userController.onboard);
+
+// GET /users/me
+// Requires authentication
+router.get('/me', authenticateToken, userController.getProfile);
+
+export default router;
