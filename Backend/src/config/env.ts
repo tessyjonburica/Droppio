@@ -27,6 +27,7 @@ const envSchema = z.object({
 
   // Blockchain
   USDC_BASE_CONTRACT_ADDRESS: z.string().regex(/^0x[a-fA-F0-9]{40}$/),
+  DROPPIO_CONTRACT_ADDRESS: z.string().regex(/^0x[a-fA-F0-9]{40}$/),
   BASE_RPC_URL: z.string().url(),
   CHAIN_ID: z.string().default('8453'),
 

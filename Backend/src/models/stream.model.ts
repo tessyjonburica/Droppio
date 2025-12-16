@@ -77,6 +77,28 @@ export const streamModel = {
     return data as Stream;
   },
 
+  findActiveByCreatorId: async (creatorId: string): Promise<Stream | null> => {
+    // Schema uses creator_id, but model interface uses streamer_id
+    // Map creator_id to streamer_id for compatibility
+    const { data, error } = await supabase
+      .from('streams')
+      .select('*')
+      .eq('creator_id', creatorId)
+      .eq('is_live', true)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return null;
+      }
+      throw new Error(`Failed to find active stream: ${error.message}`);
+    }
+
+    return data as Stream;
+  },
+
   endStream: async (streamId: string): Promise<Stream | null> => {
     const { data, error } = await supabase
       .from('streams')

@@ -22,18 +22,25 @@ export interface AuthResponse {
 
 export const authService = {
   async login(data: LoginInput): Promise<AuthResponse> {
-    const response = await api.post<AuthResponse>('/auth/login', data);
-    const { accessToken, refreshToken, user } = response.data;
-    // Normalize backend snake_case to frontend camelCase
-    const normalizedUser = {
-      id: user.id,
-      walletAddress: user.walletAddress,
-      role: user.role,
-      displayName: user.displayName,
-      avatarUrl: user.avatarUrl,
-    };
-    useAuthStore.getState().setAuth(normalizedUser, accessToken, refreshToken);
-    return response.data;
+    try {
+      const response = await api.post<AuthResponse>('/auth/login', data);
+      const { accessToken, refreshToken, user } = response.data;
+      // Normalize backend snake_case to frontend camelCase
+      const normalizedUser = {
+        id: user.id,
+        walletAddress: user.walletAddress,
+        role: user.role,
+        displayName: user.displayName,
+        avatarUrl: user.avatarUrl,
+      };
+      useAuthStore.getState().setAuth(normalizedUser, accessToken, refreshToken);
+      return response.data;
+    } catch (error: any) {
+      console.error('Auth service login error:', error);
+      // Re-throw with more context
+      const errorMessage = error.response?.data?.error || error.message || 'Login failed';
+      throw new Error(errorMessage);
+    }
   },
 
   async refresh(refreshToken: string): Promise<AuthResponse> {

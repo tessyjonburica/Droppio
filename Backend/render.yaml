@@ -1,0 +1,86 @@
+# Render Blueprint for Droppio Backend
+services:
+  - type: web
+    name: droppio-backend-testnet
+    env: node
+    plan: starter
+    buildCommand: cd Backend && npm ci && npm run build
+    startCommand: cd Backend && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+      - key: WS_PORT
+        value: 3001
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: JWT_REFRESH_SECRET
+        sync: false
+      - key: REDIS_HOST
+        value: redis-testnet
+      - key: REDIS_PORT
+        value: 6379
+      - key: REDIS_PASSWORD
+        sync: false
+      - key: DROPPIO_CONTRACT_ADDRESS
+        sync: false
+      - key: BASE_RPC_URL
+        sync: false
+      - key: CHAIN_ID
+        value: '84532'
+    healthCheckPath: /health
+
+  - type: web
+    name: droppio-backend-production
+    env: node
+    plan: starter
+    buildCommand: cd Backend && npm ci && npm run build
+    startCommand: cd Backend && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+      - key: WS_PORT
+        value: 3001
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: JWT_REFRESH_SECRET
+        sync: false
+      - key: REDIS_HOST
+        value: redis-production
+      - key: REDIS_PORT
+        value: 6379
+      - key: REDIS_PASSWORD
+        sync: false
+      - key: DROPPIO_CONTRACT_ADDRESS
+        sync: false
+      - key: BASE_RPC_URL
+        sync: false
+      - key: CHAIN_ID
+        value: '8453'
+    healthCheckPath: /health
+
+  - type: redis
+    name: redis-testnet
+    plan: starter
+    maxmemoryPolicy: allkeys-lru
+
+  - type: redis
+    name: redis-production
+    plan: starter
+    maxmemoryPolicy: allkeys-lru
+

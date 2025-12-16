@@ -8,7 +8,9 @@ export const authController = {
   login: async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
       const input: LoginInput = req.body;
+      logger.info('Login attempt', { walletAddress: input.walletAddress, role: input.role });
       const result = await authService.login(input);
+      logger.info('Login successful', { userId: result.user.id });
       res.status(200).json(result);
     } catch (error) {
       logger.error('Login error:', error);

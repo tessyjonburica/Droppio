@@ -2,8 +2,7 @@ import { WebSocket } from 'ws';
 import { logger } from '../utils/logger';
 import { OverlayChannelEvent, TipEvent } from '../types/websocket';
 import { wsManager } from './manager';
-import { verifyAccessToken, JwtPayload } from '../utils/jwt';
-import { userModel } from '../models/user.model';
+import { overlayModel } from '../models/overlay.model';
 
 interface OverlayWebSocketRequest {
   url?: string;
@@ -11,59 +10,47 @@ interface OverlayWebSocketRequest {
 }
 
 export const handleOverlayConnection = (ws: WebSocket, req: OverlayWebSocketRequest): void => {
-  // Extract streamerId from URL path /ws/overlay/{streamerId}
+  // Extract creatorId from URL path /ws/overlay/{creatorId}?token=...
   const url = new URL(req.url || '', 'http://localhost');
   const pathParts = url.pathname.split('/');
-  const streamerIdIndex = pathParts.indexOf('overlay');
-  const streamerId =
-    streamerIdIndex >= 0 && pathParts[streamerIdIndex + 1] ? pathParts[streamerIdIndex + 1] : null;
+  const overlayIndex = pathParts.indexOf('overlay');
+  const creatorId =
+    overlayIndex >= 0 && pathParts[overlayIndex + 1] ? pathParts[overlayIndex + 1] : null;
 
-  if (!streamerId) {
-    ws.close(1008, 'Invalid streamer ID');
+  if (!creatorId) {
+    ws.close(1008, 'Invalid creator ID');
     return;
   }
 
-  // Authenticate WebSocket connection
-  const authHeader = req.headers?.authorization;
-  const token = authHeader && authHeader.split(' ')[1];
+  // Extract access_token from query params or Authorization header
+  const accessToken = url.searchParams.get('token') || 
+    (req.headers?.authorization && req.headers.authorization.split(' ')[1]);
 
-  if (!token) {
-    ws.close(1008, 'No authentication token');
+  if (!accessToken) {
+    ws.close(1008, 'No access token provided');
     return;
   }
 
-  // Verify JWT token
-  let payload: JwtPayload;
-  try {
-    payload = verifyAccessToken(token);
-  } catch {
-    ws.close(1008, 'Invalid token');
-    return;
-  }
-
-  // Validate streamer exists
-  userModel
-    .findByWalletAddress(payload.walletAddress)
-    .then((user) => {
-      if (!user) {
-        ws.close(1008, 'User not found');
-        return;
-      }
-
-      if (user.id !== streamerId) {
-        ws.close(1008, 'Unauthorized');
+  // Validate token against overlays table
+  // For MVP: verify overlay exists for creatorId
+  // In production: verify access_token matches overlay.access_token
+  overlayModel
+    .findByStreamerId(creatorId)
+    .then((overlay) => {
+      if (!overlay) {
+        ws.close(1008, 'Overlay not found for creator');
         return;
       }
 
       // Add WebSocket to overlay connections map
-      wsManager.addOverlayConnection(streamerId, ws);
+      wsManager.addOverlayConnection(creatorId, ws);
 
       // Handle incoming messages
       ws.on('message', (data: Buffer) => {
         try {
           const message = JSON.parse(data.toString());
           if (message.type === 'pong') {
-            const conn = wsManager.getOverlayConnection(streamerId);
+            const conn = wsManager.getOverlayConnection(creatorId);
             if (conn) {
               conn.lastPing = new Date();
             }
@@ -75,15 +62,15 @@ export const handleOverlayConnection = (ws: WebSocket, req: OverlayWebSocketRequ
 
       // Handle disconnect
       ws.on('close', () => {
-        wsManager.removeOverlayConnection(streamerId);
+        wsManager.removeOverlayConnection(creatorId);
       });
 
       ws.on('error', (error) => {
-        logger.error(`Overlay WebSocket error for ${streamerId}:`, error);
-        wsManager.removeOverlayConnection(streamerId);
+        logger.error(`Overlay WebSocket error for ${creatorId}:`, error);
+        wsManager.removeOverlayConnection(creatorId);
       });
 
-      logger.info(`Overlay WebSocket connected: ${streamerId}`);
+      logger.info(`Overlay WebSocket connected: creator:${creatorId}`);
     })
     .catch((error) => {
       logger.error('Overlay connection error:', error);

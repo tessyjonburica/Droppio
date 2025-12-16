@@ -22,7 +22,12 @@ export const authService = {
     );
 
     if (!verification.isValid || !verification.address) {
-      throw new Error('Invalid wallet signature');
+      logger.error('Signature verification failed', {
+        walletAddress: input.walletAddress,
+        messageLength: input.message.length,
+        signatureLength: input.signature.length,
+      });
+      throw new Error('Invalid wallet signature. Please try signing again.');
     }
 
     // Find or create user
@@ -30,19 +35,30 @@ export const authService = {
 
     if (!user) {
       // Create new user if doesn't exist
-      user = await userModel.create({
-        walletAddress: input.walletAddress,
-        role: input.role || 'viewer',
-      });
+      try {
+        user = await userModel.create({
+          walletAddress: input.walletAddress,
+          role: input.role || 'viewer',
+        });
+      } catch (error) {
+        logger.error('Failed to create user:', error);
+        throw new Error('Failed to create user account. Please try again.');
+      }
     } else if (input.role && user.role !== input.role) {
       // Update role if provided and different
-      user = await userModel.onboard({
-        walletAddress: input.walletAddress,
-        role: input.role,
-      });
+      try {
+        user = await userModel.onboard({
+          walletAddress: input.walletAddress,
+          role: input.role,
+        });
+      } catch (error) {
+        logger.error('Failed to update user role:', error);
+        throw new Error('Failed to update user role. Please try again.');
+      }
     }
 
     if (!user) {
+      logger.error('User is null after create/update');
       throw new Error('Failed to create or find user');
     }
 
@@ -56,8 +72,13 @@ export const authService = {
     const refreshToken = generateRefreshToken(payload);
 
     // Store refresh token in Redis with rotation
-    const refreshTokenKey = `refresh_token:${user.id}:${refreshToken}`;
-    await redis.setex(refreshTokenKey, 7 * 24 * 60 * 60, '1'); // 7 days TTL
+    try {
+      const refreshTokenKey = `refresh_token:${user.id}:${refreshToken}`;
+      await redis.setex(refreshTokenKey, 7 * 24 * 60 * 60, '1'); // 7 days TTL
+    } catch (redisError) {
+      logger.error('Redis error during login (non-critical):', redisError);
+      // Continue without Redis - tokens will still work, just won't be stored
+    }
 
     return {
       accessToken,

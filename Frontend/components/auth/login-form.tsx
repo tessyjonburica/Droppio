@@ -62,11 +62,15 @@ export function LoginForm() {
         router.push('/');
       }
     } catch (error: any) {
+      console.error('Login error details:', error);
+      const errorMessage = error.response?.data?.error || error.message || 'Failed to login';
       toast({
         title: 'Login failed',
-        description: error.message || 'Failed to login',
+        description: errorMessage,
         variant: 'destructive',
       });
+      // Don't redirect on error
+      return;
     } finally {
       setIsLoading(false);
     }

@@ -2,6 +2,7 @@ import express, { Express, Request, Response, NextFunction } from 'express';
 import { env } from './config/env';
 import { logger } from './utils/logger';
 import { createWebSocketServer } from './websockets/server';
+import { blockchainListener } from './services/blockchain-listener.service';
 
 // Import routes
 import authRoutes from './routes/auth.routes';
@@ -49,16 +50,23 @@ app.listen(PORT, () => {
   
   // Initialize WebSocket server
   createWebSocketServer();
+  
+  // Start blockchain event listener
+  blockchainListener.start().catch((error) => {
+    logger.error('Failed to start blockchain listener:', error);
+  });
 });
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
   logger.info('SIGTERM signal received: closing HTTP server');
+  blockchainListener.stop();
   process.exit(0);
 });
 
 process.on('SIGINT', () => {
   logger.info('SIGINT signal received: closing HTTP server');
+  blockchainListener.stop();
   process.exit(0);
 });
 
