@@ -2,11 +2,12 @@ import { supabase } from '../config/db';
 import { Tip, SendTipInput } from '../types/tip';
 
 export const tipModel = {
-  create: async (input: SendTipInput, viewerId: string): Promise<Tip | null> => {
+  create: async (input: SendTipInput, viewerId: string, creatorId: string): Promise<Tip | null> => {
     const { data, error } = await supabase
       .from('tips')
       .insert({
-        stream_id: input.streamId,
+        creator_id: creatorId,
+        stream_id: input.streamId || null,
         viewer_id: viewerId,
         amount_usdc: input.amountUsdc,
         tx_hash: input.txHash,
@@ -61,6 +62,20 @@ export const tipModel = {
 
     if (error) {
       throw new Error(`Failed to find tips: ${error.message}`);
+    }
+
+    return (data || []) as Tip[];
+  },
+
+  findByCreatorId: async (creatorId: string): Promise<Tip[]> => {
+    const { data, error } = await supabase
+      .from('tips')
+      .select('*')
+      .eq('creator_id', creatorId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      throw new Error(`Failed to find tips by creator: ${error.message}`);
     }
 
     return (data || []) as Tip[];

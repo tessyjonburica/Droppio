@@ -62,6 +62,7 @@ export const userModel = {
       if (input.role) updateData.role = input.role;
       if (input.displayName !== undefined) updateData.display_name = input.displayName;
       if (input.avatarUrl !== undefined) updateData.avatar_url = input.avatarUrl;
+      if (input.bio !== undefined) updateData.bio = input.bio;
       if (input.platform !== undefined) updateData.platform = input.platform;
       if (input.payoutWallet !== undefined) updateData.payout_wallet = input.payoutWallet?.toLowerCase();
 
@@ -87,6 +88,7 @@ export const userModel = {
         role: input.role,
         display_name: input.displayName || null,
         avatar_url: input.avatarUrl || null,
+        bio: input.bio || null,
         platform: input.platform || null,
         payout_wallet: input.payoutWallet?.toLowerCase() || null,
       })
@@ -107,6 +109,7 @@ export const userModel = {
     const updateData: Record<string, unknown> = {};
     if (input.displayName !== undefined) updateData.display_name = input.displayName;
     if (input.avatarUrl !== undefined) updateData.avatar_url = input.avatarUrl;
+    if (input.bio !== undefined) updateData.bio = input.bio;
     if (input.platform !== undefined) updateData.platform = input.platform;
     if (input.payoutWallet !== undefined) {
       updateData.payout_wallet = input.payoutWallet ? input.payoutWallet.toLowerCase() : null;
@@ -124,5 +127,54 @@ export const userModel = {
     }
 
     return data as User;
+  },
+
+  findByDisplayName: async (displayName: string): Promise<User | null> => {
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .ilike('display_name', displayName)
+      .eq('role', 'creator')
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return null;
+      }
+      throw new Error(`Failed to find user by display name: ${error.message}`);
+    }
+
+    return data as User;
+  },
+
+  searchCreators: async (query: string): Promise<User[]> => {
+    // If empty query, return all creators
+    if (!query || query.trim().length === 0) {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('role', 'creator')
+        .limit(100);
+
+      if (error) {
+        throw new Error(`Failed to search creators: ${error.message}`);
+      }
+
+      return (data || []) as User[];
+    }
+
+    const searchTerm = `%${query}%`;
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('role', 'creator')
+      .or(`display_name.ilike.${searchTerm},wallet_address.ilike.${searchTerm}`)
+      .limit(20);
+
+    if (error) {
+      throw new Error(`Failed to search creators: ${error.message}`);
+    }
+
+    return (data || []) as User[];
   },
 };

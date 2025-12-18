@@ -25,4 +25,18 @@ router.post('/onboard', authenticateToken, validate(onboardSchema), userControll
 // Requires authentication
 router.get('/me', authenticateToken, userController.getProfile);
 
+// PATCH /users/me
+// Requires authentication
+// Body: { displayName?, avatarUrl?, bio?, platform?, payoutWallet? }
+const updateProfileSchema = z.object({
+  body: z.object({
+    displayName: z.string().min(1).max(100).optional(),
+    avatarUrl: z.string().url().optional(),
+    bio: z.string().max(500).optional(),
+    platform: PlatformSchema.optional(),
+    payoutWallet: z.string().regex(/^0x[a-fA-F0-9]{40}$/).optional(),
+  }),
+});
+router.patch('/me', authenticateToken, validate(updateProfileSchema), userController.updateProfile);
+
 export default router;

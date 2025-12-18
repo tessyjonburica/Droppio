@@ -4,7 +4,7 @@ export const LoginInputSchema = z.object({
   walletAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/, 'Invalid wallet address'),
   signature: z.string().min(1, 'Signature required'),
   message: z.string().min(1, 'Message required'),
-  role: z.enum(['viewer', 'streamer']).optional(),
+  role: z.enum(['viewer', 'creator']).optional(),
 });
 
 export type LoginInput = z.infer<typeof LoginInputSchema>;
@@ -21,7 +21,7 @@ export interface AuthResponse {
   user: {
     id: string;
     walletAddress: string;
-    role: 'viewer' | 'streamer';
+    role: 'viewer' | 'creator';
     displayName: string | null;
     avatarUrl: string | null;
   };

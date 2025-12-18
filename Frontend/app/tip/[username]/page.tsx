@@ -18,13 +18,6 @@ import { ethers } from 'ethers';
 import { generateMessage } from '@/utils/signature';
 import { formatDistanceToNow } from 'date-fns';
 
-interface CreatorProfile {
-  id: string;
-  display_name: string | null;
-  avatar_url: string | null;
-  wallet_address: string;
-  platform: string | null;
-}
 
 export default function TipPage() {
   const params = useParams();
@@ -32,6 +25,7 @@ export default function TipPage() {
   const { address, isConnected } = useAccount();
   const { toast } = useToast();
   const [creator, setCreator] = useState<CreatorProfile | null>(null);
+  const [isLoadingCreator, setIsLoadingCreator] = useState(true);
   const [activeStream, setActiveStream] = useState<any>(null);
   const [amount, setAmount] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -119,10 +113,10 @@ export default function TipPage() {
       return;
     }
 
-    if (!activeStream) {
+    if (!creator) {
       toast({
-        title: 'No active stream',
-        description: 'The creator is not currently streaming',
+        title: 'Creator not loaded',
+        description: 'Please wait for creator profile to load',
         variant: 'destructive',
       });
       return;
@@ -155,20 +149,28 @@ export default function TipPage() {
       // In production, this would interact with the smart contract
       const txHash = `0x${Math.random().toString(16).slice(2).padStart(64, '0')}`;
 
-      const newTip = await tipService.sendTip({
-        streamId: activeStream.id,
+      // Send tip with streamId if live, or creatorId if offline
+      const tipData: any = {
         amountUsdc: tipAmount.toFixed(6),
         signature,
         message,
         txHash,
-      });
+      };
+
+      if (activeStream) {
+        tipData.streamId = activeStream.id;
+      } else {
+        tipData.creatorId = creator.id;
+      }
+
+      const newTip = await tipService.sendTip(tipData);
 
       // Add new tip to recent tips
       setRecentTips((prev) => [newTip, ...prev].slice(0, 10));
 
       toast({
         title: 'Tip sent!',
-        description: `You sent ${tipAmount} USDC`,
+        description: `You sent ${tipAmount} USDC to ${creator.display_name || 'creator'}`,
       });
 
       setAmount('');
@@ -182,6 +184,44 @@ export default function TipPage() {
       setIsLoading(false);
     }
   };
+
+  if (isLoadingCreator) {
+    return (
+      <>
+        <Header />
+        <main className="min-h-screen bg-soft-mint">
+          <div className="container mx-auto px-4 py-8">
+            <div className="max-w-2xl mx-auto">
+              <Card>
+                <CardContent className="p-8 text-center">
+                  <p className="text-muted-foreground">Loading creator profile...</p>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </main>
+      </>
+    );
+  }
+
+  if (!creator) {
+    return (
+      <>
+        <Header />
+        <main className="min-h-screen bg-soft-mint">
+          <div className="container mx-auto px-4 py-8">
+            <div className="max-w-2xl mx-auto">
+              <Card>
+                <CardContent className="p-8 text-center">
+                  <p className="text-muted-foreground">Creator not found</p>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </main>
+      </>
+    );
+  }
 
   return (
     <>
@@ -214,10 +254,13 @@ export default function TipPage() {
                       {activeStream ? (
                         <span className="flex items-center gap-2">
                           <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
-                          Live on {activeStream.platform}
+                          <span className="font-medium text-red-600">Live</span> on {activeStream.platform}
                         </span>
                       ) : (
-                        'Offline'
+                        <span className="flex items-center gap-2">
+                          <span className="w-2 h-2 bg-gray-400 rounded-full"></span>
+                          <span className="text-muted-foreground">Offline</span>
+                        </span>
                       )}
                     </CardDescription>
                   </div>
@@ -246,7 +289,7 @@ export default function TipPage() {
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
                     placeholder="0.00"
-                    disabled={!isConnected || !activeStream}
+                    disabled={!isConnected || !creator}
                   />
                 </div>
                 {!isConnected ? (
@@ -259,10 +302,10 @@ export default function TipPage() {
                 ) : (
                   <Button
                     onClick={handleTip}
-                    disabled={isLoading || !activeStream || !amount}
+                    disabled={isLoading || !creator || !amount}
                     className="w-full"
                   >
-                    {isLoading ? 'Processing...' : 'Send Tip'}
+                    {isLoading ? 'Processing...' : `Tip ${creator?.display_name || 'Creator'}`}
                   </Button>
                 )}
               </CardContent>

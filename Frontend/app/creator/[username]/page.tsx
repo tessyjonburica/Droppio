@@ -7,11 +7,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { streamService } from '@/services/stream.service';
+import { creatorService } from '@/services/creator.service';
 
 interface CreatorProfile {
   id: string;
   display_name: string | null;
   avatar_url: string | null;
+  bio: string | null;
   wallet_address: string;
   platform: string | null;
 }
@@ -23,10 +25,26 @@ export default function CreatorProfilePage() {
   const [activeStream, setActiveStream] = useState<any>(null);
 
   useEffect(() => {
-    // TODO: Load creator by username from backend
-    // For now, placeholder
-    loadActiveStream();
+    const loadCreator = async () => {
+      try {
+        const profile = await creatorService.getByUsername(username);
+        setCreator(profile);
+      } catch (error) {
+        console.error('Failed to load creator:', error);
+        // Creator not found - will show placeholder
+      }
+    };
+    
+    if (username) {
+      loadCreator();
+    }
   }, [username]);
+
+  useEffect(() => {
+    if (creator?.id) {
+      loadActiveStream();
+    }
+  }, [creator?.id]);
 
   const loadActiveStream = async () => {
     if (!creator?.id) return;
@@ -66,6 +84,9 @@ export default function CreatorProfilePage() {
                     </CardTitle>
                     {creator?.platform && (
                       <CardDescription>Streaming on {creator.platform}</CardDescription>
+                    )}
+                    {creator?.bio && (
+                      <p className="text-sm text-muted-foreground mt-2">{creator.bio}</p>
                     )}
                   </div>
                 </div>

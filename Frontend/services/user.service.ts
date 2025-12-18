@@ -15,10 +15,19 @@ export interface User {
   role: 'viewer' | 'streamer';
   display_name: string | null;
   avatar_url: string | null;
+  bio: string | null;
   platform: 'twitch' | 'youtube' | 'kick' | 'tiktok' | null;
   payout_wallet: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface UpdateProfileInput {
+  displayName?: string;
+  avatarUrl?: string;
+  bio?: string;
+  platform?: 'twitch' | 'youtube' | 'kick' | 'tiktok';
+  payoutWallet?: string;
 }
 
 export const userService = {
@@ -28,8 +37,13 @@ export const userService = {
   },
 
   async getMe(): Promise<User> {
-    const response = await api.get<User>('/users/me');
-    return response.data;
+    const response = await api.get<{ user: User }>('/users/me');
+    return response.data.user;
+  },
+
+  async updateProfile(data: UpdateProfileInput): Promise<User> {
+    const response = await api.patch<{ user: User }>('/users/me', data);
+    return response.data.user;
   },
 };
 

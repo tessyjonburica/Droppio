@@ -16,6 +16,7 @@ CREATE TABLE users (
     role TEXT NOT NULL CHECK (role IN ('viewer', 'creator', 'admin')) DEFAULT 'viewer',
     display_name TEXT,
     avatar_url TEXT,
+    bio TEXT,
     platform TEXT CHECK (platform IN ('twitch', 'youtube', 'kick', 'tiktok')),
     payout_wallet TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -59,7 +60,7 @@ CREATE TABLE tips (
     creator_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     stream_id UUID REFERENCES streams(id) ON DELETE SET NULL,
     viewer_id UUID REFERENCES users(id) ON DELETE SET NULL,
-    amount_usdc NUMERIC(18, 6) NOT NULL CHECK (amount_usdc > 0),
+    amount_eth NUMERIC(18, 18) NOT NULL CHECK (amount_eth > 0),
     tx_hash TEXT UNIQUE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

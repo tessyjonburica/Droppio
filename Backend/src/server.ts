@@ -10,6 +10,7 @@ import userRoutes from './routes/user.routes';
 import streamRoutes from './routes/stream.routes';
 import tipRoutes from './routes/tip.routes';
 import overlayRoutes from './routes/overlay.routes';
+import creatorRoutes from './routes/creator.routes';
 
 const app: Express = express();
 
@@ -37,6 +38,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/streams', streamRoutes);
 app.use('/api/tips', tipRoutes);
 app.use('/api/overlay', overlayRoutes);
+app.use('/api/creators', creatorRoutes);
 
 // 404 handler
 app.use((req: Request, res: Response) => {

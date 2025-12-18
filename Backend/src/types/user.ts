@@ -12,6 +12,7 @@ export interface User {
   role: UserRole;
   display_name: string | null;
   avatar_url: string | null;
+  bio: string | null;
   platform: Platform | null;
   payout_wallet: string | null;
   created_at: Date;
@@ -35,6 +36,7 @@ export interface OnboardUserInput {
 export interface UpdateStreamerProfileInput {
   displayName?: string;
   avatarUrl?: string;
+  bio?: string;
   platform?: Platform;
   payoutWallet?: string;
 }

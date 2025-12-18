@@ -15,7 +15,7 @@ export function LoginForm() {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const [role, setRole] = useState<'viewer' | 'streamer'>('viewer');
+  const [role, setRole] = useState<'viewer' | 'creator'>('viewer');
 
   const handleLogin = async () => {
     if (!address || !isConnected) {
@@ -51,7 +51,7 @@ export function LoginForm() {
         description: 'Welcome to Droppio!',
       });
 
-      if (role === 'streamer') {
+      if (role === 'creator') {
         // Check if user needs onboarding
         if (!response.user.displayName) {
           router.push('/onboard');
@@ -105,11 +105,11 @@ export function LoginForm() {
               Viewer
             </Button>
             <Button
-              variant={role === 'streamer' ? 'default' : 'outline'}
-              onClick={() => setRole('streamer')}
+              variant={role === 'creator' ? 'default' : 'outline'}
+              onClick={() => setRole('creator')}
               type="button"
             >
-              Streamer
+              Creator
             </Button>
           </div>
         </div>

@@ -11,7 +11,8 @@ export interface Tip {
 }
 
 export interface SendTipInput {
-  streamId: string;
+  streamId?: string; // Optional - if provided, tip is associated with stream
+  creatorId?: string; // Optional - if provided, tip is offline (no stream)
   amountUsdc: string;
   signature: string;
   message: string;

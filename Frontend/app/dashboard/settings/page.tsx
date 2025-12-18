@@ -16,15 +16,26 @@ export default function SettingsPage() {
   const { toast } = useToast();
   const [displayName, setDisplayName] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
+  const [bio, setBio] = useState('');
   const [platform, setPlatform] = useState<'twitch' | 'youtube' | 'kick' | 'tiktok' | ''>('');
   const [payoutWallet, setPayoutWallet] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        const profile = await userService.getMe();
+        setDisplayName(profile.display_name || '');
+        setAvatarUrl(profile.avatar_url || '');
+        setPlatform(profile.platform || '');
+        setPayoutWallet(profile.payout_wallet || '');
+      } catch (error) {
+        console.error('Failed to load profile:', error);
+      }
+    };
+
     if (user) {
-      setDisplayName(user.displayName || '');
-      setAvatarUrl(user.avatarUrl || '');
-      // TODO: Load platform and payout wallet from user profile
+      loadProfile();
     }
   }, [user]);
 
@@ -33,7 +44,14 @@ export default function SettingsPage() {
     setIsLoading(true);
 
     try {
-      // TODO: Implement update profile endpoint
+      await userService.updateProfile({
+        displayName: displayName.trim() || undefined,
+        avatarUrl: avatarUrl.trim() || undefined,
+        bio: bio.trim() || undefined,
+        platform: platform || undefined,
+        payoutWallet: payoutWallet.trim() || undefined,
+      });
+
       toast({
         title: 'Settings saved',
         description: 'Your profile has been updated',
@@ -42,7 +60,7 @@ export default function SettingsPage() {
     } catch (error: any) {
       toast({
         title: 'Failed to save',
-        description: error.message || 'Failed to update settings',
+        description: error.response?.data?.error || error.message || 'Failed to update settings',
         variant: 'destructive',
       });
     } finally {
@@ -88,6 +106,21 @@ export default function SettingsPage() {
                       onChange={(e) => setAvatarUrl(e.target.value)}
                       placeholder="https://example.com/avatar.jpg"
                     />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label htmlFor="bio" className="text-sm font-medium">
+                      Bio
+                    </label>
+                    <textarea
+                      id="bio"
+                      value={bio}
+                      onChange={(e) => setBio(e.target.value)}
+                      placeholder="Tell viewers about yourself..."
+                      className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      maxLength={500}
+                    />
+                    <p className="text-xs text-muted-foreground">{bio.length}/500</p>
                   </div>
 
                   <div className="space-y-2">
