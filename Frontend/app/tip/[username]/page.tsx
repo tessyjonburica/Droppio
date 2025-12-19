@@ -32,24 +32,19 @@ export default function TipPage() {
   const [recentTips, setRecentTips] = useState<TipResponse[]>([]);
 
   // Load creator profile
-  useEffect(() => {
+   useEffect(() => {
     const loadCreator = async () => {
       try {
         const profile = await creatorService.getByUsername(username);
         setCreator(profile);
       } catch (error) {
         console.error('Failed to load creator:', error);
-        toast({
-          title: 'Creator not found',
-          description: 'This creator profile does not exist',
-          variant: 'destructive',
-        });
       }
     };
     if (username) {
       loadCreator();
     }
-  }, [username, toast]);
++ }, [username]);
 
   // Load active stream
   const loadActiveStream = useCallback(async () => {

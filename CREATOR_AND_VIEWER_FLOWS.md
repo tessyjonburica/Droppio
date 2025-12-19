@@ -171,8 +171,7 @@ Complete documentation of user journeys for creators and viewers on Droppio.
 ---
 
 ## 👁️ VIEWER FLOW
-
-### Step 1: Discover Creator
+### Step 1: Discover Creator (Landing Page)
 
 **Frontend:** `/creator/{username}` or `/tip/{username}`
 - Viewer visits creator profile page

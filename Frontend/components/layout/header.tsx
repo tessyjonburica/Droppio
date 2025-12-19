@@ -28,8 +28,8 @@ export function Header() {
               </Button>
             </>
           ) : (
-            <Link href="/login">
-              <Button>Login</Button>
+            <Link href="/creator-login">
+              <Button variant="ghost">Creator Login</Button>
             </Link>
           )}
           <WalletConnect />
@@ -38,4 +38,3 @@ export function Header() {
     </header>
   );
 }
-

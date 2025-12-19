@@ -3,7 +3,6 @@
 import { useEffect } from 'react';
 import { useAccount } from 'wagmi';
 import { useAuthStore } from '@/store/auth-store';
-import { authService } from '@/services/auth.service';
 import { useRouter } from 'next/navigation';
 
 export function useAuth() {
@@ -11,23 +10,22 @@ export function useAuth() {
   const { user, isAuthenticated, clearAuth } = useAuthStore();
   const router = useRouter();
 
-  // Auto-login on wallet connect (for creators only)
-  // Viewers don't need to login
+  // Only restore session for existing authenticated users
+  // Don't auto-login viewers - they don't need accounts
   useEffect(() => {
-    if (isConnected && address && !isAuthenticated) {
-      // Check if we have stored auth data for this wallet
+    if (isConnected && address && isAuthenticated) {
       const storedAuth = useAuthStore.getState();
-      if (storedAuth.user?.walletAddress === address && storedAuth.accessToken) {
-        // User already logged in with this wallet, restore session
-        // This handles page refreshes
-        return;
+      // Validate stored session matches current wallet
+      if (storedAuth.user?.walletAddress !== address) {
+        // Wallet changed - clear old session
+        clearAuth();
       }
-      // Auto-login is handled by login form component
-      // Don't auto-login viewers - they should tip without auth
     }
-  }, [isConnected, address, isAuthenticated]);
+  }, [isConnected, address, isAuthenticated, clearAuth]);
 
   const logout = async () => {
+    // Import authService here to avoid circular dependency
+    const { authService } = await import('@/services/auth.service');
     await authService.logout();
     router.push('/');
   };
@@ -40,4 +38,3 @@ export function useAuth() {
     logout,
   };
 }
-

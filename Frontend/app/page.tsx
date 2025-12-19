@@ -19,6 +19,8 @@ export default function Home() {
   const [isSearching, setIsSearching] = useState(false);
   const [showResults, setShowResults] = useState(false);
 
+  const searchRef = useRef<HTMLDivElement | null>(null);
+
   // Load featured creators on mount
   useEffect(() => {
     const loadFeatured = async () => {
@@ -164,16 +166,19 @@ export default function Home() {
               </div>
 
               <div className="flex gap-4 justify-center">
-                <Link href="/login">
+                <Link href="/creator-login">
                   <Button size="lg" className="text-lg px-8">
-                    Get Started
+                    Become a Creator
                   </Button>
                 </Link>
-                <Link href="/creator">
-                  <Button size="lg" variant="outline" className="text-lg px-8">
-                    Browse Creators
-                  </Button>
-                </Link>
+                <button 
+                  onClick={() => {
+                    document.getElementById('featured-creators')?.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-lg font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-11 px-8"
+                >
+                  Browse Creators
+                </button>
               </div>
             </div>
           </div>
