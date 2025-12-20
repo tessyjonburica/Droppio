@@ -5,7 +5,7 @@ export interface LoginInput {
   walletAddress: string;
   signature: string;
   message: string;
-  role?: 'viewer' | 'streamer';
+  role?: 'viewer' | 'creator';
 }
 
 export interface AuthResponse {
@@ -14,7 +14,7 @@ export interface AuthResponse {
   user: {
     id: string;
     walletAddress: string;
-    role: 'viewer' | 'streamer';
+    role: 'viewer' | 'creator';
     displayName: string | null;
     avatarUrl: string | null;
   };
@@ -38,6 +38,10 @@ export const authService = {
     } catch (error: any) {
       console.error('Auth service login error:', error);
       // Re-throw with more context
+      // Handle network errors gracefully
+      if (error.code === 'ERR_NETWORK' || !error.response) {
+        throw new Error('Unable to connect to the server. Please check your internet connection and ensure the server is running.');
+      }
       const errorMessage = error.response?.data?.error || error.message || 'Login failed';
       throw new Error(errorMessage);
     }

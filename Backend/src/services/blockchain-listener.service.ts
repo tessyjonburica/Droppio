@@ -38,33 +38,45 @@ class BlockchainListener {
    */
   private async initializeProvider(): Promise<void> {
     try {
-      // Use WebSocket RPC URL for real-time events
-      // Convert HTTPS/HTTP to WSS/WS
-      let wsRpcUrl = env.BASE_RPC_URL;
-      if (wsRpcUrl.startsWith('https://')) {
-        wsRpcUrl = wsRpcUrl.replace('https://', 'wss://');
-      } else if (wsRpcUrl.startsWith('http://')) {
-        wsRpcUrl = wsRpcUrl.replace('http://', 'ws://');
-      } else if (!wsRpcUrl.startsWith('ws://') && !wsRpcUrl.startsWith('wss://')) {
-        // Assume HTTPS if no protocol
-        wsRpcUrl = `wss://${wsRpcUrl}`;
-      }
-      
-      this.provider = new ethers.WebSocketProvider(wsRpcUrl);
-      this.contract = new ethers.Contract(env.DROPPIO_CONTRACT_ADDRESS, DROPPIO_ABI, this.provider);
+      const wsRpcUrl = env.BASE_WS_RPC;
 
-      // Handle provider disconnection
+      if (!wsRpcUrl) {
+        throw new Error('BASE_WS_RPC is not defined');
+      }
+
+      if (!wsRpcUrl.startsWith('ws://') && !wsRpcUrl.startsWith('wss://')) {
+        throw new Error('BASE_WS_RPC must start with ws:// or wss://');
+      }
+
+      this.provider = new ethers.WebSocketProvider(wsRpcUrl);
+
+      this.contract = new ethers.Contract(
+        env.DROPPIO_CONTRACT_ADDRESS,
+        DROPPIO_ABI,
+        this.provider
+      );
+
+      // WS-level disconnect handling (ethers v6 safe)
+      (this.provider as any)._websocket?.on('close', () => {
+        logger.warn('Blockchain WS closed — reconnecting');
+        this.handleDisconnect();
+      });
+
+
       this.provider.on('error', (error) => {
         logger.error('Blockchain provider error:', error);
         this.handleDisconnect();
       });
 
-      logger.info(`Blockchain listener initialized for contract: ${env.DROPPIO_CONTRACT_ADDRESS}`);
+      logger.info(
+        `Blockchain listener initialized for contract: ${env.DROPPIO_CONTRACT_ADDRESS}`
+      );
     } catch (error) {
       logger.error('Failed to initialize blockchain provider:', error);
       throw error;
     }
   }
+
 
   /**
    * Start listening to TipSent events
@@ -77,7 +89,7 @@ class BlockchainListener {
 
     try {
       await this.initializeProvider();
-      
+
       if (!this.contract || !this.provider) {
         throw new Error('Provider or contract not initialized');
       }
@@ -138,8 +150,8 @@ class BlockchainListener {
       const activeStream = await streamModel.findActiveByStreamerId(creator.id);
       const streamId = activeStream?.id || null;
 
-    // Convert amount from wei to ETH (18 decimals)
-    const amountEth = ethers.formatEther(event.amount);
+      // Convert amount from wei to ETH (18 decimals)
+      const amountEth = ethers.formatEther(event.amount);
 
       // Persist tip to database
       // Note: Schema uses creator_id, but we need to map it correctly
@@ -224,7 +236,7 @@ class BlockchainListener {
    */
   private handleDisconnect(): void {
     this.isListening = false;
-    
+
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
       logger.error('Max reconnect attempts reached. Stopping blockchain listener.');
       return;

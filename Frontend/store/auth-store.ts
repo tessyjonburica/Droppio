@@ -4,7 +4,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 interface User {
   id: string;
   walletAddress: string;
-  role: 'viewer' | 'streamer';
+  role: 'viewer' | 'creator';
   displayName: string | null;
   avatarUrl: string | null;
 }
