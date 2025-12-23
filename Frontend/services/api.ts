@@ -3,6 +3,11 @@ import { useAuthStore } from '@/store/auth-store';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
+// Log API URL in development for debugging
+if (process.env.NODE_ENV === 'development') {
+  console.log(`[API Client] Using API URL: ${API_URL}/api`);
+}
+
 class ApiClient {
   private client: AxiosInstance;
 
@@ -13,6 +18,7 @@ class ApiClient {
         'Content-Type': 'application/json',
       },
       withCredentials: true,
+      timeout: 30000, // 30 seconds timeout
     });
 
     this.setupInterceptors();

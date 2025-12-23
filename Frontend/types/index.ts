@@ -1,4 +1,4 @@
-export type UserRole = 'viewer' | 'streamer';
+export type UserRole = 'viewer' | 'creator';
 export type Platform = 'twitch' | 'youtube' | 'kick' | 'tiktok';
 
 export interface User {

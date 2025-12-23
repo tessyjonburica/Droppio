@@ -4,11 +4,7 @@ import { z, ZodSchema } from 'zod';
 export const validate = (schema: ZodSchema) => {
   return (req: Request, res: Response, next: NextFunction): void => {
     try {
-      schema.parse({
-        body: req.body,
-        query: req.query,
-        params: req.params,
-      });
+      schema.parse(req.body);
       next();
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -22,4 +18,3 @@ export const validate = (schema: ZodSchema) => {
     }
   };
 };
-

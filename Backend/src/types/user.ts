@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const UserRoleSchema = z.enum(['viewer', 'streamer']);
+export const UserRoleSchema = z.enum(['viewer', 'creator']);
 export type UserRole = z.infer<typeof UserRoleSchema>;
 
 export const PlatformSchema = z.enum(['twitch', 'youtube', 'kick', 'tiktok']);

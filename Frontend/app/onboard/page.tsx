@@ -32,13 +32,13 @@ export default function OnboardPage() {
 
   // Redirect if not authenticated
   useEffect(() => {
-    if (!isAuthenticated || !isConnected) {
-      router.push('/login');
+    if (!isAuthenticated) {
+      router.push('/creator-login');
     }
-  }, [isAuthenticated, isConnected, router]);
+  }, [isAuthenticated, router]);
 
   // Show loading state during redirects
-  if ((isAuthenticated && user?.displayName) || !isAuthenticated || !isConnected) {
+  if ((isAuthenticated && user?.displayName) || !isAuthenticated) {
     return null;
   }
 
@@ -59,9 +59,9 @@ export default function OnboardPage() {
     try {
       await userService.onboard({
         walletAddress: address!,
-        role: 'streamer',
+        role: 'creator',
         displayName: displayName.trim(),
-        avatarUrl: avatarUrl.trim() || undefined,
+        ...(avatarUrl.trim() && { avatarUrl: avatarUrl.trim() }),
         platform: platform || undefined,
         payoutWallet: payoutWallet.trim() || undefined,
       });

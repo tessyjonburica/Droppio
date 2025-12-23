@@ -11,6 +11,7 @@ import { generateMessage } from '@/utils/signature';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { ethers } from 'ethers';
+import { checkServerHealth } from '@/services/health-check';
 
 const WalletConnect = dynamic(() => import('@/components/auth/wallet-connect').then(mod => ({ default: mod.WalletConnect })), {
   ssr: false,
@@ -22,6 +23,25 @@ export default function CreatorLoginClient() {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [serverStatus, setServerStatus] = useState<{ isHealthy: boolean; message: string } | null>(null);
+
+  // Check server health on mount
+  useEffect(() => {
+    const checkHealth = async () => {
+      const health = await checkServerHealth();
+      setServerStatus({ isHealthy: health.isHealthy, message: health.message });
+      
+      if (!health.isHealthy) {
+        toast({
+          title: 'Server Connection Issue',
+          description: health.message,
+          variant: 'destructive',
+        });
+      }
+    };
+    
+    checkHealth();
+  }, [toast]);
 
   const handleLogin = async () => {
     if (!address || !isConnected) {
@@ -30,6 +50,18 @@ export default function CreatorLoginClient() {
         description: 'Please connect your wallet first',
         variant: 'destructive',
       });
+      return;
+    }
+
+    // Check server health before attempting login
+    const health = await checkServerHealth();
+    if (!health.isHealthy) {
+      toast({
+        title: 'Cannot connect to server',
+        description: health.message,
+        variant: 'destructive',
+      });
+      setServerStatus({ isHealthy: false, message: health.message });
       return;
     }
 
@@ -65,7 +97,21 @@ export default function CreatorLoginClient() {
       }
     } catch (error: any) {
       console.error('Login error:', error);
-      const errorMessage = error.response?.data?.error || error.message || 'Failed to login';
+      
+      // Extract error message - handle both Error objects and Axios errors
+      let errorMessage = 'Failed to login';
+      
+      if (error instanceof Error) {
+        // Standard Error object (from auth.service.ts)
+        errorMessage = error.message;
+      } else if (error.response?.data) {
+        // Axios error with response
+        errorMessage = error.response.data.error || error.response.data.message || error.message || 'Failed to login';
+      } else if (error.message) {
+        // Axios error without response (network error)
+        errorMessage = error.message;
+      }
+      
       toast({
         title: 'Login failed',
         description: errorMessage,
@@ -94,6 +140,16 @@ export default function CreatorLoginClient() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            {serverStatus && !serverStatus.isHealthy && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-sm text-red-800 font-medium mb-1">⚠️ Server Connection Issue</p>
+                <p className="text-xs text-red-600">{serverStatus.message}</p>
+                <p className="text-xs text-red-600 mt-2">
+                  Make sure the backend server is running: <code className="bg-red-100 px-1 rounded">cd Backend && npm run dev</code>
+                </p>
+              </div>
+            )}
+            
             {!isConnected ? (
               <>
                 <WalletConnect />
@@ -109,7 +165,7 @@ export default function CreatorLoginClient() {
                     {address?.slice(0, 6)}...{address?.slice(-4)}
                   </p>
                 </div>
-                <Button onClick={handleLogin} disabled={isLoading} className="w-full">
+                <Button onClick={handleLogin} disabled={isLoading || (serverStatus && !serverStatus.isHealthy)} className="w-full">
                   {isLoading ? 'Signing in...' : 'Sign In as Creator'}
                 </Button>
               </>

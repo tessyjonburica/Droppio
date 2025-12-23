@@ -16,7 +16,7 @@ export function useAuth() {
     if (isConnected && address && isAuthenticated) {
       const storedAuth = useAuthStore.getState();
       // Validate stored session matches current wallet
-      if (storedAuth.user?.walletAddress !== address) {
+      if (storedAuth.user?.walletAddress?.toLowerCase() !== address?.toLowerCase()) {
         // Wallet changed - clear old session
         clearAuth();
       }
