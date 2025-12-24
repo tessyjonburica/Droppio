@@ -72,7 +72,7 @@ class ApiClient {
             return this.client(originalRequest);
           } catch (refreshError) {
             useAuthStore.getState().clearAuth();
-            window.location.href = '/login';
+            window.location.href = '/creator-login';
             return Promise.reject(refreshError);
           }
         }

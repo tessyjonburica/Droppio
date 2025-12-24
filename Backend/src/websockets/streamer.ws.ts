@@ -59,8 +59,8 @@ export const handleStreamerConnection = (ws: WebSocket, req: StreamerWebSocketRe
         return;
       }
 
-      if (user.role !== 'streamer') {
-        ws.close(1008, 'User is not a streamer');
+      if (user.role !== 'creator') {
+        ws.close(1008, 'User is not a creator');
         return;
       }
 

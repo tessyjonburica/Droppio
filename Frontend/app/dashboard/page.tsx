@@ -37,15 +37,15 @@ export default function DashboardPage() {
   const generateOverlayUrl = useCallback(() => {
     if (!user?.id || !accessToken) return;
     // Use production domain or fallback to current origin
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL ||
       (typeof window !== 'undefined' ? window.location.origin : 'https://dropp.io');
     const url = `${baseUrl}/overlay/${user.id}?token=${accessToken}`;
     setOverlayUrl(url);
   }, [user?.id, accessToken]);
 
   useEffect(() => {
-    if (!isAuthenticated || user?.role !== 'streamer') {
-      router.push('/login');
+    if (!isAuthenticated || user?.role !== 'creator') {
+      router.push('/creator-login');
       return;
     }
 
@@ -84,7 +84,7 @@ export default function DashboardPage() {
     });
   };
 
-  if (!isAuthenticated || user?.role !== 'streamer' || !user?.displayName) {
+  if (!isAuthenticated || user?.role !== 'creator' || !user?.displayName) {
     return null;
   }
 
@@ -222,7 +222,7 @@ export default function DashboardPage() {
                     const viewerAddress = tip.viewer?.walletAddress || tip.viewer?.wallet_address || '';
                     const amount = tip.amount || tip.amount_usdc;
                     const timestamp = tip.timestamp || tip.created_at;
-                    
+
                     return (
                       <div
                         key={tipId}

@@ -46,7 +46,7 @@ const updateOverlaySchema = z.object({
 router.patch(
   '/:streamer_id/config',
   authenticateToken,
-  requireRole(['streamer']),
+  requireRole(['creator']),
   validate(updateOverlaySchema),
   overlayController.updateConfig
 );

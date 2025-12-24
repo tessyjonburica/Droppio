@@ -33,20 +33,20 @@ export const userService = {
     walletAddress: string,
     input: UpdateStreamerProfileInput
   ): Promise<User> => {
-    // Validate user exists and is a streamer
+    // Validate user exists and is a creator
     const user = await userModel.findByWalletAddress(walletAddress);
     if (!user) {
       throw new Error('User not found');
     }
 
-    if (user.role !== 'streamer') {
-      throw new Error('User is not a streamer');
+    if (user.role !== 'creator') {
+      throw new Error('User is not a creator');
     }
 
     // Update profile
     const updatedUser = await userModel.updateStreamerProfile(walletAddress, input);
     if (!updatedUser) {
-      throw new Error('Failed to update streamer profile');
+      throw new Error('Failed to update creator profile');
     }
 
     return updatedUser;

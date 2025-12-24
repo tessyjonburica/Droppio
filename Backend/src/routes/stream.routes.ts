@@ -20,7 +20,7 @@ const startStreamSchema = z.object({
 router.post(
   '/start',
   authenticateToken,
-  requireRole(['streamer']),
+  requireRole(['creator']),
   validate(startStreamSchema),
   streamController.startStream
 );
@@ -36,7 +36,7 @@ const endStreamSchema = z.object({
 router.post(
   '/end',
   authenticateToken,
-  requireRole(['streamer']),
+  requireRole(['creator']),
   validate(endStreamSchema),
   streamController.endStream
 );

@@ -2,7 +2,7 @@ import { api } from './api';
 
 export interface OnboardUserInput {
   walletAddress: string;
-  role: 'viewer' | 'streamer';
+  role: 'viewer' | 'creator';
   displayName?: string;
   avatarUrl?: string;
   platform?: 'twitch' | 'youtube' | 'kick' | 'tiktok';
@@ -12,7 +12,7 @@ export interface OnboardUserInput {
 export interface User {
   id: string;
   wallet_address: string;
-  role: 'viewer' | 'streamer';
+  role: 'viewer' | 'creator';
   display_name: string | null;
   avatar_url: string | null;
   bio: string | null;
@@ -46,4 +46,3 @@ export const userService = {
     return response.data.user;
   },
 };
-

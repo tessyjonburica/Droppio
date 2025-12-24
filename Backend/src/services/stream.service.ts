@@ -6,20 +6,20 @@ import { viewerWsHelpers } from '../websockets/viewer.ws';
 
 export const streamService = {
   startStream: async (streamerId: string, input: StartStreamInput): Promise<Stream> => {
-    // Validate streamer exists and is a streamer
+    // Validate creator exists and is a creator
     const streamer = await userModel.findById(streamerId);
     if (!streamer) {
       throw new Error('Streamer not found');
     }
 
-    if (streamer.role !== 'streamer') {
+    if (streamer.role !== 'creator') {
       throw new Error('User is not a streamer');
     }
 
-    // Check if streamer already has an active stream
+    // Check if creator already has an active stream
     const activeStream = await streamModel.findActiveByStreamerId(streamerId);
     if (activeStream) {
-      throw new Error('Streamer already has an active stream');
+      throw new Error('Creator already has an active stream');
     }
 
     // Create new stream
@@ -41,9 +41,9 @@ export const streamService = {
       throw new Error('Stream not found');
     }
 
-    // Validate stream belongs to streamer
+    // Validate stream belongs to creator
     if (stream.streamer_id !== streamerId) {
-      throw new Error('Stream does not belong to this streamer');
+      throw new Error('Stream does not belong to this creator');
     }
 
     // End stream

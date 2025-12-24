@@ -99,7 +99,7 @@ export default function Home() {
                 Support Creators with Crypto Tips
               </h1>
               <p className="font-body text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-                The Web3 tipping platform for streamers. Receive tips in ETH on Base network, 
+                The Web3 tipping platform for streamers. Receive tips in ETH on Base network,
                 with real-time alerts and seamless integration.
               </p>
 
@@ -171,7 +171,7 @@ export default function Home() {
                     Become a Creator
                   </Button>
                 </Link>
-                <button 
+                <button
                   onClick={() => {
                     document.getElementById('featured-creators')?.scrollIntoView({ behavior: 'smooth' });
                   }}
@@ -300,10 +300,10 @@ export default function Home() {
           <div className="container mx-auto px-4 text-center">
             <h2 className="font-header text-4xl mb-6">Ready to Start Tipping?</h2>
             <p className="text-xl mb-8 opacity-90 max-w-2xl mx-auto">
-              Join the Web3 tipping revolution. Support your favorite creators with instant, 
+              Join the Web3 tipping revolution. Support your favorite creators with instant,
               on-chain tips powered by Base network.
             </p>
-            <Link href="/login">
+            <Link href="/creator-login">
               <Button size="lg" variant="secondary" className="text-lg px-8">
                 Get Started Now
               </Button>

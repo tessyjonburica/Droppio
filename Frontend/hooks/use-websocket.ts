@@ -34,12 +34,13 @@ export function useWebSocket({ channel, id, onMessage, enabled = true }: UseWebS
 
     const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3001';
     let url = `${wsUrl}/ws/${channel}/${id}`;
-    
-    // For overlay channel, token is passed via URL search params
-    // For other channels, token is passed via Authorization header in subprotocol
-    const ws = channel === 'overlay' 
-      ? new WebSocket(url) // Token will be in URL params from page
-      : new WebSocket(url, accessToken ? ['Bearer', accessToken].join(' ') : undefined);
+
+    // Pass token via URL search params for authenticated channels
+    if (accessToken && channel !== 'viewer') {
+      url += `?token=${encodeURIComponent(accessToken)}`;
+    }
+
+    const ws = new WebSocket(url);
 
     ws.onopen = () => {
       setIsConnected(true);

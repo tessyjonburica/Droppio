@@ -5,7 +5,7 @@ import { redis } from '../config/redis';
 export interface AuthenticatedRequest extends Request {
   user?: {
     walletAddress: string;
-    role: 'viewer' | 'streamer';
+    role: 'viewer' | 'creator';
   };
 }
 
@@ -38,7 +38,7 @@ export const authenticateToken = async (
   }
 };
 
-export const requireRole = (allowedRoles: ('viewer' | 'streamer')[]) => {
+export const requireRole = (allowedRoles: ('viewer' | 'creator')[]) => {
   return (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
     if (!req.user) {
       res.status(401).json({ error: 'Authentication required' });
