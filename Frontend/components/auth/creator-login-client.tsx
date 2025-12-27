@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAccount } from 'wagmi';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Logo } from '@/components/brand/logo';
+// import { Logo } from '@/components/brand/logo';
 import dynamic from 'next/dynamic';
 import { authService } from '@/services/auth.service';
 import { generateMessage } from '@/utils/signature';
@@ -24,13 +24,18 @@ export default function CreatorLoginClient() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [serverStatus, setServerStatus] = useState<{ isHealthy: boolean; message: string } | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Check server health on mount
   useEffect(() => {
     const checkHealth = async () => {
       const health = await checkServerHealth();
       setServerStatus({ isHealthy: health.isHealthy, message: health.message });
-      
+
       if (!health.isHealthy) {
         toast({
           title: 'Server Connection Issue',
@@ -39,7 +44,7 @@ export default function CreatorLoginClient() {
         });
       }
     };
-    
+
     checkHealth();
   }, [toast]);
 
@@ -97,13 +102,22 @@ export default function CreatorLoginClient() {
       }
     } catch (error: any) {
       console.error('Login error:', error);
-      
+
       // Extract error message - handle both Error objects and Axios errors
       let errorMessage = 'Failed to login';
-      
+
       if (error instanceof Error) {
         // Standard Error object (from auth.service.ts)
         errorMessage = error.message;
+      } else if (error?.code === 'ACTION_REJECTED' || error?.code === 4001 || error?.info?.error?.code === 4001) {
+        // User rejected the signature request
+        errorMessage = 'Login cancelled';
+        toast({
+          title: 'Login cancelled',
+          description: 'You rejected the signature request',
+          variant: 'default',
+        });
+        return;
       } else if (error.response?.data) {
         // Axios error with response
         errorMessage = error.response.data.error || error.response.data.message || error.message || 'Failed to login';
@@ -111,7 +125,7 @@ export default function CreatorLoginClient() {
         // Axios error without response (network error)
         errorMessage = error.message;
       }
-      
+
       toast({
         title: 'Login failed',
         description: errorMessage,
@@ -149,8 +163,14 @@ export default function CreatorLoginClient() {
                 </p>
               </div>
             )}
-            
-            {!isConnected ? (
+
+            {!mounted ? (
+              // Loading/Skeleton state to prevent hydration mismatch
+              <div className="flex flex-col items-center justify-center space-y-4 py-8">
+                <div className="h-10 w-48 bg-muted animate-pulse rounded" />
+                <div className="h-4 w-64 bg-muted animate-pulse rounded" />
+              </div>
+            ) : !isConnected ? (
               <>
                 <WalletConnect />
                 <p className="text-sm text-muted-foreground text-center">
@@ -165,7 +185,7 @@ export default function CreatorLoginClient() {
                     {address?.slice(0, 6)}...{address?.slice(-4)}
                   </p>
                 </div>
-                <Button onClick={handleLogin} disabled={isLoading || (serverStatus && !serverStatus.isHealthy)} className="w-full">
+                <Button onClick={handleLogin} disabled={isLoading || (serverStatus?.isHealthy === false)} className="w-full">
                   {isLoading ? 'Signing in...' : 'Sign In as Creator'}
                 </Button>
               </>

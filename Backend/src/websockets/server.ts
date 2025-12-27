@@ -14,9 +14,11 @@ let wss: WebSocketServer | null = null;
 
 export const createWebSocketServer = (): WebSocketServer => {
   const httpServer = createServer();
-  wss = new WebSocketServer({ server: httpServer, path: '/ws' });
+  wss = new WebSocketServer({ server: httpServer });
 
   wss.on('connection', (ws: WebSocket, req) => {
+    logger.info(`New WebSocket connection attempt: ${req.url}`);
+
     const parsedUrl = parse(req.url || '', true);
     const pathname = parsedUrl.pathname || '';
 

@@ -18,8 +18,9 @@ export function useOverlayWebSocket({
     if (!enabled || !creatorId || !token) return;
 
     const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3001';
-    const url = `${wsUrl}/ws/overlay/${creatorId}`;
-    const ws = new WebSocket(url, ['Bearer', token].join(' '));
+    // Append token to query string for auth
+    const url = `${wsUrl}/ws/overlay/${creatorId}?token=${encodeURIComponent(token)}`;
+    const ws = new WebSocket(url);
 
     ws.onopen = () => {
       setIsConnected(true);

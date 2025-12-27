@@ -28,10 +28,13 @@ export const handleStreamerConnection = (ws: WebSocket, req: StreamerWebSocketRe
   }
 
   // Authenticate WebSocket connection
+  // Check Authorization header OR query param token
   const authHeader = req.headers?.authorization;
-  const token = authHeader && authHeader.split(' ')[1];
+  const queryToken = url.searchParams.get('token');
+  const token = (authHeader && authHeader.split(' ')[1]) || queryToken;
 
   if (!token) {
+    logger.warn(`Streamer connection rejected: No token provided. StreamerId: ${streamerId}`);
     ws.close(1008, 'No authentication token');
     return;
   }
@@ -50,16 +53,19 @@ export const handleStreamerConnection = (ws: WebSocket, req: StreamerWebSocketRe
     .findByWalletAddress(payload.walletAddress)
     .then((user) => {
       if (!user) {
+        logger.warn(`Streamer connection rejected: User not found. StreamerId: ${streamerId}, User: ${payload.walletAddress}`);
         ws.close(1008, 'User not found');
         return;
       }
 
       if (user.id !== streamerId) {
+        logger.warn(`Streamer connection rejected: ID mismatch. StreamerId: ${streamerId}, UserID: ${user.id}`);
         ws.close(1008, 'Unauthorized');
         return;
       }
 
       if (user.role !== 'creator') {
+        logger.warn(`Streamer connection rejected: User is not a creator. StreamerId: ${streamerId}`);
         ws.close(1008, 'User is not a creator');
         return;
       }

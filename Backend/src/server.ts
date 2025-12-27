@@ -54,10 +54,11 @@ const PORT = parseInt(env.PORT, 10);
 
 app.listen(PORT, () => {
   logger.info(`Server running on port ${PORT} in ${env.NODE_ENV} mode`);
-  
+
   // Initialize WebSocket server
+  logger.info('Initializing WebSocket server...');
   createWebSocketServer();
-  
+
   // Start blockchain event listener
   blockchainListener.start().catch((error) => {
     logger.error('Failed to start blockchain listener:', error);

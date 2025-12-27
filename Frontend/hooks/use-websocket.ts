@@ -40,9 +40,12 @@ export function useWebSocket({ channel, id, onMessage, enabled = true }: UseWebS
       url += `?token=${encodeURIComponent(accessToken)}`;
     }
 
+    console.log(`Connecting to WebSocket: ${url}`);
+
     const ws = new WebSocket(url);
 
     ws.onopen = () => {
+      console.log('WebSocket connected');
       setIsConnected(true);
       setReconnectAttempts(0);
     };
@@ -57,10 +60,22 @@ export function useWebSocket({ channel, id, onMessage, enabled = true }: UseWebS
     };
 
     ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
+      // WebSocket 'error' event is often empty in browsers for security/privacy reasons
+      // The 'close' event usually contains the meaningful info
+      console.error('WebSocket error observed (check close event for details). Event type:', error.type);
     };
 
-    ws.onclose = () => {
+    ws.onclose = (event) => {
+      if (event.code !== 1000) {
+        console.error('WebSocket connection closed abnormally (JSON):', JSON.stringify({
+          code: event.code,
+          reason: event.reason,
+          wasClean: event.wasClean,
+          url: ws.url
+        }));
+      } else {
+        console.log('WebSocket closed normally');
+      }
       setIsConnected(false);
       wsRef.current = null;
 

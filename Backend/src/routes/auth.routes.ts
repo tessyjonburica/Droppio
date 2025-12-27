@@ -9,12 +9,12 @@ const router = Router();
 
 // POST /auth/login
 // Body: { walletAddress, signature, message, role? }
-router.post('/login', validate(LoginInputSchema), authController.login);
+router.post('/login', validate(z.object({ body: LoginInputSchema })), authController.login);
 
 
 // POST /auth/refresh
 // Body: { refreshToken }
-router.post('/refresh', validate(RefreshTokenInputSchema), authController.refresh);
+router.post('/refresh', validate(z.object({ body: RefreshTokenInputSchema })), authController.refresh);
 
 
 // POST /auth/logout

@@ -6,12 +6,12 @@ export const streamModel = {
     const { data, error } = await supabase
       .from('streams')
       .insert({
-        streamer_id: streamerId,
+        creator_id: streamerId,
         platform: input.platform,
         stream_key: input.streamKey,
         is_live: true,
       })
-      .select()
+      .select('*, streamer_id:creator_id')
       .single();
 
     if (error) {
@@ -24,7 +24,7 @@ export const streamModel = {
   findById: async (id: string): Promise<Stream | null> => {
     const { data, error } = await supabase
       .from('streams')
-      .select('*')
+      .select('*, streamer_id:creator_id')
       .eq('id', id)
       .single();
 
@@ -41,8 +41,8 @@ export const streamModel = {
   findByStreamerId: async (streamerId: string): Promise<Stream | null> => {
     const { data, error } = await supabase
       .from('streams')
-      .select('*')
-      .eq('streamer_id', streamerId)
+      .select('*, streamer_id:creator_id')
+      .eq('creator_id', streamerId)
       .order('created_at', { ascending: false })
       .limit(1)
       .single();
@@ -60,8 +60,8 @@ export const streamModel = {
   findActiveByStreamerId: async (streamerId: string): Promise<Stream | null> => {
     const { data, error } = await supabase
       .from('streams')
-      .select('*')
-      .eq('streamer_id', streamerId)
+      .select('*, streamer_id:creator_id')
+      .eq('creator_id', streamerId)
       .eq('is_live', true)
       .order('created_at', { ascending: false })
       .limit(1)
@@ -82,7 +82,7 @@ export const streamModel = {
     // Map creator_id to streamer_id for compatibility
     const { data, error } = await supabase
       .from('streams')
-      .select('*')
+      .select('*, streamer_id:creator_id')
       .eq('creator_id', creatorId)
       .eq('is_live', true)
       .order('created_at', { ascending: false })
@@ -107,7 +107,7 @@ export const streamModel = {
         ended_at: new Date().toISOString(),
       })
       .eq('id', streamId)
-      .select()
+      .select('*, streamer_id:creator_id')
       .single();
 
     if (error) {
@@ -130,7 +130,7 @@ export const streamModel = {
       .from('streams')
       .update(updateData)
       .eq('id', streamId)
-      .select()
+      .select('*, streamer_id:creator_id')
       .single();
 
     if (error) {
