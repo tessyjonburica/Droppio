@@ -33,10 +33,7 @@ export interface ViewerLeftEvent {
   };
 }
 
-export type StreamerChannelEvent =
-  | StreamerTipReceivedEvent
-  | ViewerJoinedEvent
-  | ViewerLeftEvent;
+export type StreamerChannelEvent = StreamerTipReceivedEvent | ViewerJoinedEvent | ViewerLeftEvent;
 
 // Viewer Channel Events (/ws/viewer/{streamId})
 export interface StreamStartedEvent {
@@ -81,4 +78,3 @@ export interface TipEvent {
 }
 
 export type OverlayChannelEvent = TipEvent;
-

@@ -10,11 +10,7 @@ import { overlayWsHelpers } from '../websockets/overlay.ws';
 export const tipService = {
   sendTip: async (walletAddress: string, input: SendTipInput): Promise<TipResponse> => {
     // Verify wallet signature matches viewer
-    const verification = await verifyWalletSignature(
-      input.message,
-      input.signature,
-      walletAddress
-    );
+    const verification = await verifyWalletSignature(input.message, input.signature, walletAddress);
 
     if (!verification.isValid) {
       throw new Error('Invalid wallet signature');
@@ -60,11 +56,7 @@ export const tipService = {
     }
 
     // Verify transaction hash with ethers provider
-    const isValidTx = await verifyUSDCTransaction(
-      input.txHash,
-      input.amountUsdc,
-      walletAddress
-    );
+    const isValidTx = await verifyUSDCTransaction(input.txHash, input.amountUsdc, walletAddress);
 
     if (!isValidTx) {
       throw new Error('Transaction verification failed');
@@ -115,7 +107,11 @@ export const tipService = {
     };
   },
 
-  verifyTransaction: async (txHash: string, expectedAmount: string, fromAddress: string): Promise<boolean> => {
+  verifyTransaction: async (
+    txHash: string,
+    expectedAmount: string,
+    fromAddress: string
+  ): Promise<boolean> => {
     // Verify transaction using blockchain utilities
     return verifyUSDCTransaction(txHash, expectedAmount, fromAddress);
   },

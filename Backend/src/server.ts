@@ -16,15 +16,17 @@ import creatorRoutes from './routes/creator.routes';
 const app: Express = express();
 
 // Middleware
-app.use(cors({
-  origin: true,
-  credentials: true
-}));
+app.use(
+  cors({
+    origin: true,
+    credentials: true,
+  })
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Global error handler
-app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   logger.error('Unhandled error:', err.message, err.stack);
   res.status(500).json({
     error: 'Internal server error',
@@ -33,7 +35,7 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
 });
 
 // Health check
-app.get('/health', (req: Request, res: Response) => {
+app.get('/health', (_req: Request, res: Response) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
@@ -46,7 +48,7 @@ app.use('/api/overlay', overlayRoutes);
 app.use('/api/creators', creatorRoutes);
 
 // 404 handler
-app.use((req: Request, res: Response) => {
+app.use((_req: Request, res: Response) => {
   res.status(404).json({ error: 'Route not found' });
 });
 
@@ -60,7 +62,7 @@ app.listen(PORT, () => {
   createWebSocketServer();
 
   // Start blockchain event listener
-  blockchainListener.start().catch((error) => {
+  blockchainListener.start().catch(error => {
     logger.error('Failed to start blockchain listener:', error);
   });
 });
@@ -79,4 +81,3 @@ process.on('SIGINT', () => {
 });
 
 export default app;
-

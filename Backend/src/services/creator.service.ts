@@ -21,13 +21,15 @@ export const creatorService = {
   getByUsername: async (username: string): Promise<CreatorProfile> => {
     // Try exact match first (case-insensitive)
     let creator = await userModel.findByDisplayName(username);
-    
+
     // If not found, try partial match
     if (!creator) {
       const creators = await userModel.searchCreators(username);
       if (creators.length > 0) {
         // Find best match (exact case-insensitive or first result)
-        creator = creators.find(c => c.display_name?.toLowerCase() === username.toLowerCase()) || creators[0];
+        creator =
+          creators.find(c => c.display_name?.toLowerCase() === username.toLowerCase()) ||
+          creators[0];
       }
     }
 
@@ -46,20 +48,20 @@ export const creatorService = {
   getFeaturedCreators: async (limit: number = 10): Promise<FeaturedCreator[]> => {
     // Get all creators (search with empty string to get all)
     const allCreators = await userModel.searchCreators('');
-    
+
     // If no creators, return empty array
     if (allCreators.length === 0) {
       return [];
     }
-    
+
     // Calculate total tips for each creator
     const creatorsWithTips = await Promise.all(
-      allCreators.map(async (creator) => {
+      allCreators.map(async creator => {
         const tips = await tipModel.findByCreatorId(creator.id);
         const totalTips = tips.reduce((sum, tip) => {
           return sum + parseFloat(tip.amount_usdc || '0');
         }, 0);
-        
+
         return {
           id: creator.id,
           display_name: creator.display_name,
@@ -78,7 +80,9 @@ export const creatorService = {
       .slice(0, limit);
   },
 
-  getTotalTips: async (creatorId: string): Promise<{ totalTips: string; totalTipsCount: number }> => {
+  getTotalTips: async (
+    creatorId: string
+  ): Promise<{ totalTips: string; totalTipsCount: number }> => {
     const tips = await tipModel.findByCreatorId(creatorId);
     const totalTips = tips.reduce((sum, tip) => {
       return sum + parseFloat(tip.amount_usdc || '0');
@@ -88,5 +92,29 @@ export const creatorService = {
       totalTips: totalTips.toFixed(6),
       totalTipsCount: tips.length,
     };
+  },
+
+  getTipsByCreator: async (creatorId: string): Promise<any[]> => {
+    // Get all tips for this creator
+    const tips = await tipModel.findByCreatorId(creatorId);
+
+    // Enrich each tip with viewer information
+    const tipsWithViewers = await Promise.all(
+      tips.map(async tip => {
+        const viewer = await userModel.findById(tip.viewer_id);
+        return {
+          ...tip,
+          viewer: viewer
+            ? {
+                id: viewer.id,
+                wallet_address: viewer.wallet_address,
+                display_name: viewer.display_name,
+              }
+            : null,
+        };
+      })
+    );
+
+    return tipsWithViewers;
   },
 };

@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { WalletConnect } from '@/components/auth/wallet-connect';
 import { tipService, TipResponse } from '@/services/tip.service';
 import { streamService } from '@/services/stream.service';
-import { creatorService } from '@/services/creator.service';
+import { creatorService, CreatorProfile } from '@/services/creator.service';
 import { useWebSocket, ViewerChannelEvent } from '@/hooks/use-websocket';
 import { usePolling } from '@/hooks/use-polling';
 import { useToast } from '@/hooks/use-toast';
@@ -32,7 +32,7 @@ export default function TipPage() {
   const [recentTips, setRecentTips] = useState<TipResponse[]>([]);
 
   // Load creator profile
-   useEffect(() => {
+  useEffect(() => {
     const loadCreator = async () => {
       try {
         const profile = await creatorService.getByUsername(username);
@@ -44,7 +44,7 @@ export default function TipPage() {
     if (username) {
       loadCreator();
     }
-+ }, [username]);
+    + }, [username]);
 
   // Load active stream
   const loadActiveStream = useCallback(async () => {
@@ -323,7 +323,7 @@ export default function TipPage() {
                       const viewerName = tip.viewer?.display_name;
                       const viewerAddress = tip.viewer?.wallet_address || '';
                       const addressDisplay = viewerName || `${viewerAddress.slice(0, 6)}...${viewerAddress.slice(-4)}`;
-                      
+
                       return (
                         <div
                           key={tip.id}

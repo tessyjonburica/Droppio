@@ -56,4 +56,16 @@ export const creatorController = {
       res.status(500).json({ error: errorMessage });
     }
   },
+
+  getTipsByCreator: async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    try {
+      const { creatorId } = req.params;
+      const tips = await creatorService.getTipsByCreator(creatorId);
+      res.status(200).json({ tips });
+    } catch (error) {
+      logger.error('Get tips by creator error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Internal server error';
+      res.status(500).json({ error: errorMessage });
+    }
+  },
 };

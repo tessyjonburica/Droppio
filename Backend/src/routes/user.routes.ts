@@ -16,7 +16,10 @@ const onboardSchema = z.object({
     displayName: z.string().min(1).max(100).optional(),
     avatarUrl: z.string().url().optional(),
     platform: PlatformSchema.optional(),
-    payoutWallet: z.string().regex(/^0x[a-fA-F0-9]{40}$/).optional(),
+    payoutWallet: z
+      .string()
+      .regex(/^0x[a-fA-F0-9]{40}$/)
+      .optional(),
   }),
 });
 router.post('/onboard', authenticateToken, validate(onboardSchema), userController.onboard);
@@ -34,7 +37,10 @@ const updateProfileSchema = z.object({
     avatarUrl: z.string().url().optional(),
     bio: z.string().max(500).optional(),
     platform: PlatformSchema.optional(),
-    payoutWallet: z.string().regex(/^0x[a-fA-F0-9]{40}$/).optional(),
+    payoutWallet: z
+      .string()
+      .regex(/^0x[a-fA-F0-9]{40}$/)
+      .optional(),
   }),
 });
 router.patch('/me', authenticateToken, validate(updateProfileSchema), userController.updateProfile);

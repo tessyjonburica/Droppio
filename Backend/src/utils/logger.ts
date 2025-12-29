@@ -19,4 +19,3 @@ export const logger = {
   error: (message: string, ...args: unknown[]) => log('error', message, ...args),
   debug: (message: string, ...args: unknown[]) => log('debug', message, ...args),
 };
-

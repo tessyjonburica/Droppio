@@ -9,7 +9,6 @@ import {
   JwtPayload,
 } from '../utils/jwt';
 import { redis } from '../config/redis';
-import { env } from '../config/env';
 import { logger } from '../utils/logger';
 
 export const authService = {
@@ -93,7 +92,9 @@ export const authService = {
     };
   },
 
-  refresh: async (input: RefreshTokenInput): Promise<{ accessToken: string; refreshToken: string }> => {
+  refresh: async (
+    input: RefreshTokenInput
+  ): Promise<{ accessToken: string; refreshToken: string }> => {
     // Verify refresh token
     let payload: JwtPayload;
     try {

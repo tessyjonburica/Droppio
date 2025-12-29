@@ -23,7 +23,8 @@ export const handleOverlayConnection = (ws: WebSocket, req: OverlayWebSocketRequ
   }
 
   // Extract access_token from query params or Authorization header
-  const accessToken = url.searchParams.get('token') || 
+  const accessToken =
+    url.searchParams.get('token') ||
     (req.headers?.authorization && req.headers.authorization.split(' ')[1]);
 
   if (!accessToken) {
@@ -36,7 +37,7 @@ export const handleOverlayConnection = (ws: WebSocket, req: OverlayWebSocketRequ
   // In production: verify access_token matches overlay.access_token
   overlayModel
     .findByStreamerId(creatorId)
-    .then((overlay) => {
+    .then(overlay => {
       if (!overlay) {
         ws.close(1008, 'Overlay not found for creator');
         return;
@@ -65,14 +66,14 @@ export const handleOverlayConnection = (ws: WebSocket, req: OverlayWebSocketRequ
         wsManager.removeOverlayConnection(creatorId);
       });
 
-      ws.on('error', (error) => {
+      ws.on('error', error => {
         logger.error(`Overlay WebSocket error for ${creatorId}:`, error);
         wsManager.removeOverlayConnection(creatorId);
       });
 
       logger.info(`Overlay WebSocket connected: creator:${creatorId}`);
     })
-    .catch((error) => {
+    .catch(error => {
       logger.error('Overlay connection error:', error);
       ws.close(1008, 'Connection error');
     });

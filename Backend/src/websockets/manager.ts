@@ -109,7 +109,7 @@ export const wsManager = {
     // Heartbeat interval: ping every 30 seconds
     const pingInterval = setInterval(() => {
       const now = new Date();
-      const timeout = 60000; // 60 seconds timeout
+      // 60 seconds timeout
 
       // Ping streamers
       for (const [streamerId, conn] of wsConnections.streamers.entries()) {
@@ -214,7 +214,7 @@ export const wsManager = {
     // Clear intervals
     const intervals = (wsManager as unknown as { intervals?: NodeJS.Timeout[] }).intervals;
     if (intervals) {
-      intervals.forEach((interval) => clearInterval(interval));
+      intervals.forEach(interval => clearInterval(interval));
     }
   },
 };

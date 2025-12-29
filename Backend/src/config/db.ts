@@ -22,19 +22,15 @@ export const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, {
 // Service role client for admin operations (use with caution)
 // Service role bypasses RLS automatically in Supabase
 // IMPORTANT: Use service_role key (not anon key) - found in Supabase Dashboard → Settings → API
-export const supabaseAdmin = createClient(
-  env.SUPABASE_URL,
-  env.SUPABASE_SERVICE_ROLE_KEY,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-    global: {
-      fetch: fetch as any,
-    },
-  }
-);
+export const supabaseAdmin = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
+  auth: {
+    autoRefreshToken: false,
+    persistSession: false,
+  },
+  global: {
+    fetch: fetch as any,
+  },
+});
 
 // Validate Supabase URL format
 if (!env.SUPABASE_URL.startsWith('https://') && !env.SUPABASE_URL.startsWith('http://')) {
@@ -84,4 +80,3 @@ if (process.env.NODE_ENV === 'development') {
     }
   }, 1000); // 1 second delay
 }
-

@@ -17,21 +17,21 @@ export const userModel = {
       if (error.message?.includes('permission denied') || error.code === '42501') {
         throw new Error(
           `Database permission denied. Please check:\n` +
-          `1. SUPABASE_SERVICE_ROLE_KEY is set correctly in .env\n` +
-          `2. Run migration: 000_FRESH_START.sql in Supabase SQL Editor\n` +
-          `3. Verify the users table exists and role constraint allows '${input.role}'\n` +
-          `Original error: ${error.message}`
+            `1. SUPABASE_SERVICE_ROLE_KEY is set correctly in .env\n` +
+            `2. Run migration: 000_FRESH_START.sql in Supabase SQL Editor\n` +
+            `3. Verify the users table exists and role constraint allows '${input.role}'\n` +
+            `Original error: ${error.message}`
         );
       }
-      
+
       // Check for constraint violation (wrong role value)
       if (error.message?.includes('check constraint') || error.code === '23514') {
         throw new Error(
           `Invalid role value: '${input.role}'. Allowed values: 'viewer', 'creator', 'admin'. ` +
-          `Please run migration: 002_fix_rls_and_roles.sql`
+            `Please run migration: 002_fix_rls_and_roles.sql`
         );
       }
-      
+
       throw new Error(`Failed to create user: ${error.message} (code: ${error.code})`);
     }
 
@@ -50,18 +50,18 @@ export const userModel = {
         // No rows returned - user doesn't exist
         return null;
       }
-      
+
       // Enhanced error message for permission issues
       if (error.message?.includes('permission denied') || error.code === '42501') {
         throw new Error(
           `Database permission denied. Please check:\n` +
-          `1. SUPABASE_SERVICE_ROLE_KEY is set correctly in .env\n` +
-          `2. Run migration: 000_FRESH_START.sql in Supabase SQL Editor\n` +
-          `3. Verify the users table exists\n` +
-          `Original error: ${error.message}`
+            `1. SUPABASE_SERVICE_ROLE_KEY is set correctly in .env\n` +
+            `2. Run migration: 000_FRESH_START.sql in Supabase SQL Editor\n` +
+            `3. Verify the users table exists\n` +
+            `Original error: ${error.message}`
         );
       }
-      
+
       throw new Error(`Failed to find user: ${error.message} (code: ${error.code})`);
     }
 
@@ -69,11 +69,7 @@ export const userModel = {
   },
 
   findById: async (id: string): Promise<User | null> => {
-    const { data, error } = await supabaseAdmin
-      .from('users')
-      .select('*')
-      .eq('id', id)
-      .single();
+    const { data, error } = await supabaseAdmin.from('users').select('*').eq('id', id).single();
 
     if (error) {
       if (error.code === 'PGRST116') {
@@ -95,7 +91,8 @@ export const userModel = {
       if (input.displayName !== undefined) updateData.display_name = input.displayName;
       if (input.avatarUrl !== undefined) updateData.avatar_url = input.avatarUrl;
       if (input.platform !== undefined) updateData.platform = input.platform;
-      if (input.payoutWallet !== undefined) updateData.payout_wallet = input.payoutWallet?.toLowerCase();
+      if (input.payoutWallet !== undefined)
+        updateData.payout_wallet = input.payoutWallet?.toLowerCase();
 
       const { data, error } = await supabaseAdmin
         .from('users')

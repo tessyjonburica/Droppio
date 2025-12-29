@@ -57,6 +57,10 @@ const getActiveStreamSchema = z.object({
     streamer_id: z.string().uuid('Invalid streamer ID'),
   }),
 });
-router.get('/active/:streamer_id', validate(getActiveStreamSchema), streamController.getActiveStream);
+router.get(
+  '/active/:streamer_id',
+  validate(getActiveStreamSchema),
+  streamController.getActiveStream
+);
 
 export default router;

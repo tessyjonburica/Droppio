@@ -1,5 +1,3 @@
-import { z } from 'zod';
-
 export interface Tip {
   id: string;
   creator_id?: string; // Optional for backward compatibility

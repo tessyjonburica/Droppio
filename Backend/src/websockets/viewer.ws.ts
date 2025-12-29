@@ -16,7 +16,8 @@ export const handleViewerConnection = (ws: WebSocket, req: ViewerWebSocketReques
   const url = new URL(req.url || '', 'http://localhost');
   const pathParts = url.pathname.split('/');
   const streamIdIndex = pathParts.indexOf('viewer');
-  const streamId = streamIdIndex >= 0 && pathParts[streamIdIndex + 1] ? pathParts[streamIdIndex + 1] : null;
+  const streamId =
+    streamIdIndex >= 0 && pathParts[streamIdIndex + 1] ? pathParts[streamIdIndex + 1] : null;
 
   if (!streamId) {
     ws.close(1008, 'Invalid stream ID');
@@ -26,7 +27,7 @@ export const handleViewerConnection = (ws: WebSocket, req: ViewerWebSocketReques
   // Validate stream exists and is live
   streamModel
     .findById(streamId)
-    .then((stream) => {
+    .then(stream => {
       if (!stream) {
         ws.close(1008, 'Stream not found');
         return;
@@ -69,14 +70,14 @@ export const handleViewerConnection = (ws: WebSocket, req: ViewerWebSocketReques
         streamerWsHelpers.notifyViewerLeft(stream.streamer_id, 'anonymous', remainingViewers.size);
       });
 
-      ws.on('error', (error) => {
+      ws.on('error', error => {
         logger.error(`Viewer WebSocket error for ${streamId}:`, error);
         wsManager.removeViewerConnection(streamId, ws);
       });
 
       logger.info(`Viewer WebSocket connected: ${streamId}`);
     })
-    .catch((error) => {
+    .catch(error => {
       logger.error('Viewer connection error:', error);
       ws.close(1008, 'Connection error');
     });

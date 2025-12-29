@@ -20,7 +20,8 @@ export const handleStreamerConnection = (ws: WebSocket, req: StreamerWebSocketRe
   const url = new URL(req.url || '', 'http://localhost');
   const pathParts = url.pathname.split('/');
   const streamerIdIndex = pathParts.indexOf('streamer');
-  const streamerId = streamerIdIndex >= 0 && pathParts[streamerIdIndex + 1] ? pathParts[streamerIdIndex + 1] : null;
+  const streamerId =
+    streamerIdIndex >= 0 && pathParts[streamerIdIndex + 1] ? pathParts[streamerIdIndex + 1] : null;
 
   if (!streamerId) {
     ws.close(1008, 'Invalid streamer ID');
@@ -51,21 +52,27 @@ export const handleStreamerConnection = (ws: WebSocket, req: StreamerWebSocketRe
   // Validate streamer exists and matches authenticated user
   userModel
     .findByWalletAddress(payload.walletAddress)
-    .then((user) => {
+    .then(user => {
       if (!user) {
-        logger.warn(`Streamer connection rejected: User not found. StreamerId: ${streamerId}, User: ${payload.walletAddress}`);
+        logger.warn(
+          `Streamer connection rejected: User not found. StreamerId: ${streamerId}, User: ${payload.walletAddress}`
+        );
         ws.close(1008, 'User not found');
         return;
       }
 
       if (user.id !== streamerId) {
-        logger.warn(`Streamer connection rejected: ID mismatch. StreamerId: ${streamerId}, UserID: ${user.id}`);
+        logger.warn(
+          `Streamer connection rejected: ID mismatch. StreamerId: ${streamerId}, UserID: ${user.id}`
+        );
         ws.close(1008, 'Unauthorized');
         return;
       }
 
       if (user.role !== 'creator') {
-        logger.warn(`Streamer connection rejected: User is not a creator. StreamerId: ${streamerId}`);
+        logger.warn(
+          `Streamer connection rejected: User is not a creator. StreamerId: ${streamerId}`
+        );
         ws.close(1008, 'User is not a creator');
         return;
       }
@@ -93,14 +100,14 @@ export const handleStreamerConnection = (ws: WebSocket, req: StreamerWebSocketRe
         wsManager.removeStreamerConnection(streamerId);
       });
 
-      ws.on('error', (error) => {
+      ws.on('error', error => {
         logger.error(`Streamer WebSocket error for ${streamerId}:`, error);
         wsManager.removeStreamerConnection(streamerId);
       });
 
       logger.info(`Streamer WebSocket connected: ${streamerId}`);
     })
-    .catch((error) => {
+    .catch(error => {
       logger.error('Streamer connection error:', error);
       ws.close(1008, 'Connection error');
     });

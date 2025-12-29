@@ -1,7 +1,6 @@
 import { Stream, StartStreamInput, StreamResponse } from '../types/stream';
 import { streamModel } from '../models/stream.model';
 import { userModel } from '../models/user.model';
-import { streamerWsHelpers } from '../websockets/streamer.ws';
 import { viewerWsHelpers } from '../websockets/viewer.ws';
 
 export const streamService = {

@@ -2,13 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Header } from '@/components/layout/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/use-auth';
 import { overlayService } from '@/services/overlay.service';
 import { useToast } from '@/hooks/use-toast';
+import { ArrowLeft, Palette, Bell } from 'lucide-react';
 
 export default function OverlaySettingsPage() {
   const router = useRouter();
@@ -75,120 +75,135 @@ export default function OverlaySettingsPage() {
   };
 
   return (
-    <>
-      <Header />
-      <main className="min-h-screen bg-white">
-        <div className="container mx-auto px-4 py-8">
-          <div className="max-w-2xl mx-auto">
-            <h1 className="font-header text-4xl text-primary mb-8">Overlay Settings</h1>
+    <div className="space-y-6 max-w-2xl mx-auto">
+      <div className="flex items-center gap-4">
+        <Button variant="ghost" size="icon" onClick={() => router.back()}>
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
+        <h1 className="text-3xl font-bold tracking-tight">Overlay Settings</h1>
+      </div>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Theme</CardTitle>
-                <CardDescription>Customize your overlay appearance</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <label htmlFor="primaryColor" className="text-sm font-medium">
-                    Primary Color
-                  </label>
-                  <Input
-                    id="primaryColor"
-                    type="color"
-                    value={theme.primaryColor}
-                    onChange={(e) => setTheme({ ...theme, primaryColor: e.target.value })}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label htmlFor="fontSize" className="text-sm font-medium">
-                    Font Size
-                  </label>
-                  <Input
-                    id="fontSize"
-                    type="number"
-                    value={theme.fontSize}
-                    onChange={(e) => setTheme({ ...theme, fontSize: parseInt(e.target.value) })}
-                    min="12"
-                    max="48"
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="mt-6">
-              <CardHeader>
-                <CardTitle>Alert Settings</CardTitle>
-                <CardDescription>Configure tip alert behavior</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="enabled"
-                    checked={alertSettings.enabled}
-                    onChange={(e) => setAlertSettings({ ...alertSettings, enabled: e.target.checked })}
-                    className="rounded"
-                  />
-                  <label htmlFor="enabled" className="text-sm font-medium">
-                    Enable alerts
-                  </label>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="soundEnabled"
-                    checked={alertSettings.soundEnabled}
-                    onChange={(e) => setAlertSettings({ ...alertSettings, soundEnabled: e.target.checked })}
-                    className="rounded"
-                  />
-                  <label htmlFor="soundEnabled" className="text-sm font-medium">
-                    Enable sound
-                  </label>
-                </div>
-
-                <div className="space-y-2">
-                  <label htmlFor="minAmount" className="text-sm font-medium">
-                    Minimum Amount (USDC)
-                  </label>
-                  <Input
-                    id="minAmount"
-                    type="number"
-                    step="0.01"
-                    value={alertSettings.minAmount}
-                    onChange={(e) => setAlertSettings({ ...alertSettings, minAmount: e.target.value })}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label htmlFor="showDuration" className="text-sm font-medium">
-                    Show Duration (seconds)
-                  </label>
-                  <Input
-                    id="showDuration"
-                    type="number"
-                    value={alertSettings.showDuration}
-                    onChange={(e) => setAlertSettings({ ...alertSettings, showDuration: parseInt(e.target.value) })}
-                    min="1"
-                    max="30"
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            <div className="mt-6 flex gap-2">
-              <Button onClick={handleSave} disabled={isLoading}>
-                {isLoading ? 'Saving...' : 'Save Changes'}
-              </Button>
-              <Button variant="outline" onClick={() => router.back()}>
-                Cancel
-              </Button>
+      <div className="grid gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Palette className="h-5 w-5 text-primary" />
+              Theme
+            </CardTitle>
+            <CardDescription>Customize your overlay appearance</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <label htmlFor="primaryColor" className="text-sm font-medium">
+                Primary Color
+              </label>
+              <div className="flex gap-4 items-center">
+                <Input
+                  id="primaryColor"
+                  type="color"
+                  value={theme.primaryColor}
+                  onChange={(e) => setTheme({ ...theme, primaryColor: e.target.value })}
+                  className="w-20 h-10 p-1"
+                />
+                <span className="text-sm font-mono">{theme.primaryColor}</span>
+              </div>
             </div>
-          </div>
+
+            <div className="space-y-2">
+              <label htmlFor="fontSize" className="text-sm font-medium">
+                Font Size ({theme.fontSize}px)
+              </label>
+              <Input
+                id="fontSize"
+                type="range"
+                value={theme.fontSize}
+                onChange={(e) => setTheme({ ...theme, fontSize: parseInt(e.target.value) })}
+                min="12"
+                max="48"
+                step="1"
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Bell className="h-5 w-5 text-primary" />
+              Alert Settings
+            </CardTitle>
+            <CardDescription>Configure tip alert behavior</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <label htmlFor="enabled" className="text-sm font-medium">Enable alerts</label>
+                <p className="text-xs text-muted-foreground">Show popup when a tip is received</p>
+              </div>
+              <input
+                type="checkbox"
+                id="enabled"
+                checked={alertSettings.enabled}
+                onChange={(e) => setAlertSettings({ ...alertSettings, enabled: e.target.checked })}
+                className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <label htmlFor="soundEnabled" className="text-sm font-medium">Enable sound</label>
+                <p className="text-xs text-muted-foreground">Play a notification sound</p>
+              </div>
+              <input
+                type="checkbox"
+                id="soundEnabled"
+                checked={alertSettings.soundEnabled}
+                onChange={(e) => setAlertSettings({ ...alertSettings, soundEnabled: e.target.checked })}
+                className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="minAmount" className="text-sm font-medium">
+                Minimum Amount (USDC)
+              </label>
+              <Input
+                id="minAmount"
+                type="number"
+                step="0.01"
+                value={alertSettings.minAmount}
+                onChange={(e) => setAlertSettings({ ...alertSettings, minAmount: e.target.value })}
+                className="bg-muted/50"
+              />
+              <p className="text-xs text-muted-foreground">Only tips above this amount will trigger an alert</p>
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="showDuration" className="text-sm font-medium">
+                Show Duration ({alertSettings.showDuration}s)
+              </label>
+              <Input
+                id="showDuration"
+                type="range"
+                value={alertSettings.showDuration}
+                onChange={(e) => setAlertSettings({ ...alertSettings, showDuration: parseInt(e.target.value) })}
+                min="1"
+                max="30"
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="flex gap-4 pt-4">
+          <Button onClick={handleSave} disabled={isLoading} className="flex-1">
+            {isLoading ? 'Saving...' : 'Save Changes'}
+          </Button>
+          <Button variant="outline" onClick={() => router.back()} className="flex-1">
+            Cancel
+          </Button>
         </div>
-      </main>
-    </>
+      </div>
+    </div>
   );
 }
 

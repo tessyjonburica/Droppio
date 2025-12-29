@@ -26,4 +26,3 @@ export interface AuthResponse {
     avatarUrl: string | null;
   };
 }
-

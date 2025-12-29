@@ -19,4 +19,8 @@ router.get('/featured', creatorController.getFeaturedCreators);
 // Public endpoint - no authentication required
 router.get('/:creatorId/total-tips', creatorController.getTotalTips);
 
+// GET /creators/:creatorId/tips
+// Public endpoint - no authentication required
+router.get('/:creatorId/tips', creatorController.getTipsByCreator);
+
 export default router;

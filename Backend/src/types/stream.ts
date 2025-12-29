@@ -1,5 +1,4 @@
-import { z } from 'zod';
-import { PlatformSchema, Platform } from './user';
+import { Platform } from './user';
 
 export interface Stream {
   id: string;

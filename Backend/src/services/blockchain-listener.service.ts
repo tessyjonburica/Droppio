@@ -7,7 +7,6 @@ import { logger } from '../utils/logger';
 import { userModel } from '../models/user.model';
 import { tipModel } from '../models/tip.model';
 import { streamModel } from '../models/stream.model';
-import { overlayWsHelpers } from '../websockets/overlay.ws';
 import { wsManager } from '../websockets/manager';
 
 // Droppio contract ABI (only TipSent event)
@@ -50,11 +49,7 @@ class BlockchainListener {
 
       this.provider = new ethers.WebSocketProvider(wsRpcUrl);
 
-      this.contract = new ethers.Contract(
-        env.DROPPIO_CONTRACT_ADDRESS,
-        DROPPIO_ABI,
-        this.provider
-      );
+      this.contract = new ethers.Contract(env.DROPPIO_CONTRACT_ADDRESS, DROPPIO_ABI, this.provider);
 
       // WS-level disconnect handling (ethers v6 safe)
       (this.provider as any)._websocket?.on('close', () => {
@@ -62,21 +57,17 @@ class BlockchainListener {
         this.handleDisconnect();
       });
 
-
-      this.provider.on('error', (error) => {
+      this.provider.on('error', error => {
         logger.error('Blockchain provider error:', error);
         this.handleDisconnect();
       });
 
-      logger.info(
-        `Blockchain listener initialized for contract: ${env.DROPPIO_CONTRACT_ADDRESS}`
-      );
+      logger.info(`Blockchain listener initialized for contract: ${env.DROPPIO_CONTRACT_ADDRESS}`);
     } catch (error) {
       logger.error('Failed to initialize blockchain provider:', error);
       throw error;
     }
   }
-
 
   /**
    * Start listening to TipSent events
@@ -95,16 +86,19 @@ class BlockchainListener {
       }
 
       // Listen to TipSent events
-      this.contract.on('TipSent', async (from: string, to: string, amount: bigint, sessionId: string, event: ethers.Log) => {
-        await this.handleTipSentEvent({
-          from: from.toLowerCase(),
-          to: to.toLowerCase(),
-          amount,
-          sessionId,
-          txHash: event.transactionHash,
-          blockNumber: event.blockNumber,
-        });
-      });
+      this.contract.on(
+        'TipSent',
+        async (from: string, to: string, amount: bigint, sessionId: string, event: ethers.Log) => {
+          await this.handleTipSentEvent({
+            from: from.toLowerCase(),
+            to: to.toLowerCase(),
+            amount,
+            sessionId,
+            txHash: event.transactionHash,
+            blockNumber: event.blockNumber,
+          });
+        }
+      );
 
       this.isListening = true;
       this.reconnectAttempts = 0;
@@ -192,17 +186,21 @@ class BlockchainListener {
   /**
    * Emit TIP_SENT event to creator channel via WebSocket
    */
-  private emitTipSentEvent(creatorId: string, payload: {
-    creatorId: string;
-    tipperAddress: string;
-    amountEth: string;
-    txHash: string;
-    tipMode: string;
-    timestamp: string;
-  }): void {
+  private emitTipSentEvent(
+    creatorId: string,
+    payload: {
+      creatorId: string;
+      tipperAddress: string;
+      amountEth: string;
+      txHash: string;
+      tipMode: string;
+      timestamp: string;
+    }
+  ): void {
     // Send to overlay connection if exists
     const overlayConn = wsManager.getOverlayConnection(creatorId);
-    if (overlayConn && overlayConn.ws.readyState === 1) { // WebSocket.OPEN
+    if (overlayConn && overlayConn.ws.readyState === 1) {
+      // WebSocket.OPEN
       try {
         const event = {
           type: 'TIP_SENT',
@@ -245,10 +243,12 @@ class BlockchainListener {
     this.reconnectAttempts++;
     const delay = this.reconnectDelay * this.reconnectAttempts;
 
-    logger.warn(`Blockchain provider disconnected. Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
+    logger.warn(
+      `Blockchain provider disconnected. Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})`
+    );
 
     this.reconnectTimeout = setTimeout(() => {
-      this.start().catch((error) => {
+      this.start().catch(error => {
         logger.error('Reconnection failed:', error);
       });
     }, delay);
@@ -280,4 +280,3 @@ class BlockchainListener {
 
 // Singleton instance
 export const blockchainListener = new BlockchainListener();
-

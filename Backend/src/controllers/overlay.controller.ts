@@ -21,7 +21,7 @@ export const overlayController = {
     try {
       const { streamer_id } = req.params;
       const walletAddress = req.user!.walletAddress;
-      
+
       // Validate streamer_id matches authenticated user
       const user = await userModel.findByWalletAddress(walletAddress);
       if (!user) {

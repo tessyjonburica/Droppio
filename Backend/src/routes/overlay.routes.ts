@@ -14,7 +14,12 @@ const getOverlaySchema = z.object({
     streamer_id: z.string().uuid('Invalid streamer ID'),
   }),
 });
-router.get('/:streamer_id/config', authenticateToken, validate(getOverlaySchema), overlayController.getConfig);
+router.get(
+  '/:streamer_id/config',
+  authenticateToken,
+  validate(getOverlaySchema),
+  overlayController.getConfig
+);
 
 // PATCH /overlay/:streamer_id/config
 // Requires authentication + streamer role (and ownership)

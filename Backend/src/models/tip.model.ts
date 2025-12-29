@@ -23,11 +23,7 @@ export const tipModel = {
   },
 
   findById: async (id: string): Promise<Tip | null> => {
-    const { data, error } = await supabase
-      .from('tips')
-      .select('*')
-      .eq('id', id)
-      .single();
+    const { data, error } = await supabase.from('tips').select('*').eq('id', id).single();
 
     if (error) {
       if (error.code === 'PGRST116') {

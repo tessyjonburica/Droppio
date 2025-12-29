@@ -1,8 +1,8 @@
-import Redis from 'ioredis';
+import Redis, { RedisOptions } from 'ioredis';
 import { env } from './env';
 import { logger } from '../utils/logger';
 
-const redisConfig: Redis.RedisOptions = {
+const redisConfig: RedisOptions = {
   host: env.REDIS_HOST,
   port: parseInt(env.REDIS_PORT, 10),
   password: env.REDIS_PASSWORD || undefined,
@@ -18,7 +18,6 @@ redis.on('connect', () => {
   logger.info('Redis connected');
 });
 
-redis.on('error', (err) => {
+redis.on('error', err => {
   logger.error('Redis error:', err);
 });
-

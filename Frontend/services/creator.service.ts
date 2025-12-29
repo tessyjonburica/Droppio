@@ -1,4 +1,5 @@
 import { api } from './api';
+import { TipResponse } from './tip.service';
 
 export interface CreatorProfile {
   id: string;
@@ -45,5 +46,9 @@ export const creatorService = {
     const response = await api.get<{ totalTips: string; totalTipsCount: number }>(`/creators/${creatorId}/total-tips`);
     return response.data;
   },
-};
 
+  async getTipsByCreator(creatorId: string): Promise<TipResponse[]> {
+    const response = await api.get<{ tips: TipResponse[] }>(`/creators/${creatorId}/tips`);
+    return response.data.tips;
+  },
+};
