@@ -32,7 +32,8 @@ export function useWebSocket({ channel, id, onMessage, enabled = true }: UseWebS
   const connect = useCallback(() => {
     if (!enabled || !id) return;
 
-    const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3001';
+    const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+    const wsUrl = process.env.NEXT_PUBLIC_WS_URL || apiBaseUrl.replace(/^http/, 'ws');
     let url = `${wsUrl}/ws/${channel}/${id}`;
 
     // Pass token via URL search params for authenticated channels

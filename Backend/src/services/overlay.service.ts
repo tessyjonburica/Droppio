@@ -3,19 +3,19 @@ import { overlayModel } from '../models/overlay.model';
 import { userModel } from '../models/user.model';
 
 export const overlayService = {
-  getConfig: async (streamerId: string): Promise<Overlay> => {
-    // Find overlay by streamer ID
-    let overlay = await overlayModel.findByStreamerId(streamerId);
+  getConfig: async (creatorId: string): Promise<Overlay> => {
+    // Find overlay by creator ID
+    let overlay = await overlayModel.findByCreatorId(creatorId);
 
     // If not found, create default overlay
     if (!overlay) {
-      // Validate streamer exists
-      const streamer = await userModel.findById(streamerId);
-      if (!streamer) {
-        throw new Error('Streamer not found');
+      // Validate creator exists
+      const creator = await userModel.findById(creatorId);
+      if (!creator) {
+        throw new Error('Creator not found');
       }
 
-      overlay = await overlayModel.create(streamerId);
+      overlay = await overlayModel.create(creatorId);
       if (!overlay) {
         throw new Error('Failed to create overlay');
       }
@@ -24,24 +24,24 @@ export const overlayService = {
     return overlay;
   },
 
-  updateConfig: async (streamerId: string, input: UpdateOverlayInput): Promise<Overlay> => {
-    // Validate streamer exists
-    const streamer = await userModel.findById(streamerId);
-    if (!streamer) {
-      throw new Error('Streamer not found');
+  updateConfig: async (creatorId: string, input: UpdateOverlayInput): Promise<Overlay> => {
+    // Validate creator exists
+    const creator = await userModel.findById(creatorId);
+    if (!creator) {
+      throw new Error('Creator not found');
     }
 
     // Get or create overlay
-    let overlay = await overlayModel.findByStreamerId(streamerId);
+    let overlay = await overlayModel.findByCreatorId(creatorId);
     if (!overlay) {
-      overlay = await overlayModel.create(streamerId);
+      overlay = await overlayModel.create(creatorId);
       if (!overlay) {
         throw new Error('Failed to create overlay');
       }
     }
 
     // Update overlay config
-    const updatedOverlay = await overlayModel.update(streamerId, input);
+    const updatedOverlay = await overlayModel.update(creatorId, input);
     if (!updatedOverlay) {
       throw new Error('Failed to update overlay config');
     }

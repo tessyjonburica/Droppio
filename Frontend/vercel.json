@@ -3,12 +3,8 @@
   "devCommand": "npm run dev",
   "installCommand": "npm install",
   "framework": "nextjs",
-  "regions": ["iad1"],
-  "rewrites": [
-    {
-      "source": "/api/:path*",
-      "destination": "https://api.droppio.xyz/api/:path*"
-    }
+  "regions": [
+    "iad1"
   ],
   "headers": [
     {
@@ -30,4 +26,3 @@
     }
   ]
 }
-

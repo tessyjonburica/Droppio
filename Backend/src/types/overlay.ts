@@ -15,7 +15,7 @@ export interface AlertSettings {
 
 export interface Overlay {
   id: string;
-  streamer_id: string;
+  creator_id: string;
   theme: OverlayTheme;
   alert_settings: AlertSettings;
   created_at: Date;

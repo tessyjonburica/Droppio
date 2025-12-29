@@ -1,9 +1,8 @@
 // WebSocket Server
 
+import { Server } from 'http';
 import { WebSocketServer, WebSocket } from 'ws';
-import { createServer } from 'http';
 import { parse } from 'url';
-import { env } from '../config/env';
 import { logger } from '../utils/logger';
 import { handleStreamerConnection } from './streamer.ws';
 import { handleViewerConnection } from './viewer.ws';
@@ -12,9 +11,8 @@ import { wsManager } from './manager';
 
 let wss: WebSocketServer | null = null;
 
-export const createWebSocketServer = (): WebSocketServer => {
-  const httpServer = createServer();
-  wss = new WebSocketServer({ server: httpServer });
+export const createWebSocketServer = (server: Server): WebSocketServer => {
+  wss = new WebSocketServer({ server });
 
   wss.on('connection', (ws: WebSocket, req) => {
     logger.info(`New WebSocket connection attempt: ${req.url}`);
@@ -37,35 +35,7 @@ export const createWebSocketServer = (): WebSocketServer => {
   // Start heartbeat cleanup
   wsManager.startHeartbeatCleanup();
 
-  const WS_PORT = parseInt(env.WS_PORT, 10);
-  httpServer.listen(WS_PORT, () => {
-    logger.info(`WebSocket server running on port ${WS_PORT}`);
-  });
-
-  // Graceful shutdown
-  process.on('SIGTERM', () => {
-    logger.info('SIGTERM signal received: closing WebSocket server');
-    wsManager.shutdown();
-    if (wss) {
-      wss.close(() => {
-        httpServer.close(() => {
-          process.exit(0);
-        });
-      });
-    }
-  });
-
-  process.on('SIGINT', () => {
-    logger.info('SIGINT signal received: closing WebSocket server');
-    wsManager.shutdown();
-    if (wss) {
-      wss.close(() => {
-        httpServer.close(() => {
-          process.exit(0);
-        });
-      });
-    }
-  });
+  logger.info('WebSocket server initialized (shared port)');
 
   return wss;
 };

@@ -4,7 +4,7 @@ import { useAccount, useConnect, useDisconnect } from 'wagmi';
 import { Button } from '@/components/ui/button';
 import { useEffect } from 'react';
 
-export function WalletConnect() {
+export function WalletConnect({ showDisconnect = true }: { showDisconnect?: boolean }) {
   const { address, isConnected } = useAccount();
   const { connect, connectors, isPending } = useConnect();
   const { disconnect } = useDisconnect();
@@ -12,12 +12,14 @@ export function WalletConnect() {
   if (isConnected && address) {
     return (
       <div className="flex items-center gap-4">
-        <span className="text-sm font-mono text-muted-foreground">
+        <span className="text-sm font-mono text-muted-foreground bg-muted/50 px-2 py-1 rounded border">
           {address.slice(0, 6)}...{address.slice(-4)}
         </span>
-        <Button variant="outline" onClick={() => disconnect()}>
-          Disconnect
-        </Button>
+        {showDisconnect && (
+          <Button variant="outline" onClick={() => disconnect()} size="sm">
+            Disconnect
+          </Button>
+        )}
       </div>
     );
   }

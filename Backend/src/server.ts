@@ -1,5 +1,6 @@
 import express, { Express, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
+import { createServer } from 'http';
 import { env } from './config/env';
 import { logger } from './utils/logger';
 import { createWebSocketServer } from './websockets/server';
@@ -14,6 +15,7 @@ import overlayRoutes from './routes/overlay.routes';
 import creatorRoutes from './routes/creator.routes';
 
 const app: Express = express();
+const httpServer = createServer(app);
 
 // Middleware
 app.use(
@@ -54,12 +56,12 @@ app.use((_req: Request, res: Response) => {
 
 const PORT = parseInt(env.PORT, 10);
 
-app.listen(PORT, () => {
+httpServer.listen(PORT, () => {
   logger.info(`Server running on port ${PORT} in ${env.NODE_ENV} mode`);
 
-  // Initialize WebSocket server
-  logger.info('Initializing WebSocket server...');
-  createWebSocketServer();
+  // Initialize WebSocket server using the same HTTP server
+  logger.info('Initializing WebSocket server on shared port...');
+  createWebSocketServer(httpServer);
 
   // Start blockchain event listener
   blockchainListener.start().catch(error => {

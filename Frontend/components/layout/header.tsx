@@ -18,21 +18,28 @@ export function Header() {
         <nav className="flex items-center gap-4">
           {isAuthenticated && user ? (
             <>
-              {user.role === 'streamer' && (
+              {(user.role === 'creator' || user.role === 'admin') && (
                 <Link href="/dashboard">
                   <Button variant="ghost">Dashboard</Button>
                 </Link>
               )}
-              <Button variant="outline" onClick={logout}>
-                Logout
+              <WalletConnect showDisconnect={false} />
+              <Button
+                variant="outline"
+                onClick={logout}
+                className="hover:bg-destructive/10 hover:text-destructive hover:border-destructive transition-colors"
+              >
+                Disconnect
               </Button>
             </>
           ) : (
-            <Link href="/creator-login">
-              <Button variant="ghost">Creator Login</Button>
-            </Link>
+            <>
+              <Link href="/creator-login">
+                <Button variant="ghost">Creator Login</Button>
+              </Link>
+              <WalletConnect />
+            </>
           )}
-          <WalletConnect />
         </nav>
       </div>
     </header>

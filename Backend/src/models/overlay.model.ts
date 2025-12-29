@@ -2,11 +2,11 @@ import { supabase } from '../config/db';
 import { Overlay, UpdateOverlayInput } from '../types/overlay';
 
 export const overlayModel = {
-  findByStreamerId: async (streamerId: string): Promise<Overlay | null> => {
+  findByCreatorId: async (creatorId: string): Promise<Overlay | null> => {
     const { data, error } = await supabase
       .from('overlays')
       .select('*')
-      .eq('streamer_id', streamerId)
+      .eq('creator_id', creatorId)
       .single();
 
     if (error) {
@@ -19,9 +19,9 @@ export const overlayModel = {
     return data as Overlay;
   },
 
-  create: async (streamerId: string): Promise<Overlay | null> => {
+  create: async (creatorId: string): Promise<Overlay | null> => {
     const defaultOverlay = {
-      streamer_id: streamerId,
+      creator_id: creatorId,
       theme: {},
       alert_settings: {
         enabled: true,
@@ -44,7 +44,7 @@ export const overlayModel = {
     return data as Overlay;
   },
 
-  update: async (streamerId: string, input: UpdateOverlayInput): Promise<Overlay | null> => {
+  update: async (creatorId: string, input: UpdateOverlayInput): Promise<Overlay | null> => {
     const updateData: Record<string, unknown> = {};
 
     if (input.theme !== undefined) {
@@ -58,7 +58,7 @@ export const overlayModel = {
     const { data, error } = await supabase
       .from('overlays')
       .update(updateData)
-      .eq('streamer_id', streamerId)
+      .eq('creator_id', creatorId)
       .select()
       .single();
 

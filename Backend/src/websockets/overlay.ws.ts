@@ -36,7 +36,7 @@ export const handleOverlayConnection = (ws: WebSocket, req: OverlayWebSocketRequ
   // For MVP: verify overlay exists for creatorId
   // In production: verify access_token matches overlay.access_token
   overlayModel
-    .findByStreamerId(creatorId)
+    .findByCreatorId(creatorId)
     .then(overlay => {
       if (!overlay) {
         ws.close(1008, 'Overlay not found for creator');

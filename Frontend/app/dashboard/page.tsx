@@ -19,7 +19,8 @@ import {
   Wifi,
   WifiOff,
   Share2,
-  Clock
+  Clock,
+  Zap
 } from 'lucide-react';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
