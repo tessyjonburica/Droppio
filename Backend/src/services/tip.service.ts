@@ -6,6 +6,7 @@ import { streamModel } from '../models/stream.model';
 import { userModel } from '../models/user.model';
 import { streamerWsHelpers } from '../websockets/streamer.ws';
 import { overlayWsHelpers } from '../websockets/overlay.ws';
+import { logger } from '../utils/logger';
 
 export const tipService = {
   sendTip: async (walletAddress: string, input: SendTipInput): Promise<TipResponse> => {
