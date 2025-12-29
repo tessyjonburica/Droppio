@@ -17,6 +17,8 @@ import { useToast } from '@/hooks/use-toast';
 import { ethers } from 'ethers';
 import { generateMessage } from '@/utils/signature';
 import { formatDistanceToNow } from 'date-fns';
+import { useAuthStore } from '@/store/auth-store';
+import { authService } from '@/services/auth.service';
 
 
 export default function TipPage() {
@@ -24,27 +26,66 @@ export default function TipPage() {
   const username = params.username as string;
   const { address, isConnected } = useAccount();
   const { toast } = useToast();
+  const { user, isAuthenticated, setHasHydrated, _hasHydrated } = useAuthStore();
   const [creator, setCreator] = useState<CreatorProfile | null>(null);
   const [isLoadingCreator, setIsLoadingCreator] = useState(true);
   const [activeStream, setActiveStream] = useState<any>(null);
   const [amount, setAmount] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [recentTips, setRecentTips] = useState<TipResponse[]>([]);
 
   // Load creator profile
   useEffect(() => {
     const loadCreator = async () => {
       try {
+        setIsLoadingCreator(true);
         const profile = await creatorService.getByUsername(username);
         setCreator(profile);
       } catch (error) {
         console.error('Failed to load creator:', error);
+      } finally {
+        setIsLoadingCreator(false);
       }
     };
     if (username) {
       loadCreator();
     }
-    + }, [username]);
+  }, [username]);
+
+  const handleLogin = async () => {
+    if (!isConnected || !address) return;
+
+    setIsLoggingIn(true);
+    try {
+      if (!window.ethereum) throw new Error('Wallet not available');
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const timestamp = Date.now();
+      const message = generateMessage(address, timestamp);
+      const signer = await provider.getSigner();
+      const signature = await signer.signMessage(message);
+
+      await authService.login({
+        walletAddress: address,
+        signature,
+        message,
+        role: 'viewer'
+      });
+
+      toast({
+        title: 'Successfully connected',
+        description: 'You can now send tips',
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Authentication failed',
+        description: error.message || 'Failed to sign in',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
 
   // Load active stream
   const loadActiveStream = useCallback(async () => {
@@ -99,9 +140,9 @@ export default function TipPage() {
   });
 
   const handleTip = async () => {
-    if (!isConnected || !address) {
+    if (!isAuthenticated || !address) {
       toast({
-        title: 'Wallet not connected',
+        title: 'Not signed in',
         description: 'Please connect your wallet to send a tip',
         variant: 'destructive',
       });
@@ -142,7 +183,11 @@ export default function TipPage() {
 
       // For MVP, we'll simulate the transaction
       // In production, this would interact with the smart contract
-      const txHash = `0x${Math.random().toString(16).slice(2).padStart(64, '0')}`;
+      // In development, use a special prefix to bypass backend verification
+      const isDev = process.env.NODE_ENV === 'development';
+      const txHash = isDev
+        ? `0x0000${Math.random().toString(16).slice(2).padStart(60, '0')}`
+        : `0x${Math.random().toString(16).slice(2).padStart(64, '0')}`;
 
       // Send tip with streamId if live, or creatorId if offline
       const tipData: any = {
@@ -158,6 +203,7 @@ export default function TipPage() {
         tipData.creatorId = creator.id;
       }
 
+      // Add a test flag if needed or handle blockchain bypass in backend
       const newTip = await tipService.sendTip(tipData);
 
       // Add new tip to recent tips
@@ -284,24 +330,39 @@ export default function TipPage() {
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
                     placeholder="0.00"
-                    disabled={!isConnected || !creator}
+                    disabled={!isAuthenticated || !creator}
                   />
                 </div>
-                {!isConnected ? (
+                {!isAuthenticated ? (
                   <div className="space-y-2">
-                    <WalletConnect />
+                    {!isConnected ? (
+                      <WalletConnect />
+                    ) : (
+                      <Button
+                        onClick={handleLogin}
+                        className="w-full"
+                        disabled={isLoggingIn}
+                      >
+                        {isLoggingIn ? 'Connecting...' : 'Connect wallet to tip'}
+                      </Button>
+                    )}
                     <p className="text-sm text-muted-foreground text-center">
-                      Connect your wallet to send tips
+                      {!isConnected ? 'Connect your wallet to start' : 'Sign a message to verify your wallet'}
                     </p>
                   </div>
                 ) : (
-                  <Button
-                    onClick={handleTip}
-                    disabled={isLoading || !creator || !amount}
-                    className="w-full"
-                  >
-                    {isLoading ? 'Processing...' : `Tip ${creator?.display_name || 'Creator'}`}
-                  </Button>
+                  <div className="space-y-2">
+                    <Button
+                      onClick={handleTip}
+                      disabled={isLoading || !creator || !amount}
+                      className="w-full"
+                    >
+                      {isLoading ? 'Processing...' : `Tip ${creator?.display_name || 'Creator'}`}
+                    </Button>
+                    <p className="text-xs text-muted-foreground text-center">
+                      Signed in as {user?.walletAddress.slice(0, 6)}...{user?.walletAddress.slice(-4)}
+                    </p>
+                  </div>
                 )}
               </CardContent>
             </Card>

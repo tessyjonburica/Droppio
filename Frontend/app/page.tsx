@@ -81,7 +81,7 @@ export default function Home() {
   }, []);
 
   const handleCreatorClick = (username: string) => {
-    router.push(`/creator/${username}`);
+    router.push(`/tip/${username}`);
     setShowResults(false);
     setSearchQuery('');
   };
@@ -247,7 +247,7 @@ export default function Home() {
                   {featuredCreators.map((creator) => (
                     <Link
                       key={creator.id}
-                      href={`/creator/${creator.display_name || creator.wallet_address}`}
+                      href={`/tip/${creator.display_name || creator.wallet_address}`}
                     >
                       <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
                         <CardHeader>

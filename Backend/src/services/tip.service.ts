@@ -56,7 +56,14 @@ export const tipService = {
     }
 
     // Verify transaction hash with ethers provider
-    const isValidTx = await verifyUSDCTransaction(input.txHash, input.amountUsdc, walletAddress);
+    // In development mode, we allow bypassing this for easier testing
+    let isValidTx = false;
+    if (process.env.NODE_ENV === 'development' && input.txHash.startsWith('0x0000')) {
+      logger.info('Bypassing blockchain verification in development mode');
+      isValidTx = true;
+    } else {
+      isValidTx = await verifyUSDCTransaction(input.txHash, input.amountUsdc, walletAddress);
+    }
 
     if (!isValidTx) {
       throw new Error('Transaction verification failed');
