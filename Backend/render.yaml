@@ -4,7 +4,7 @@ services:
     name: droppio-backend-testnet
     env: node
     plan: starter
-    buildCommand: cd Backend && npm ci && npm run build
+    buildCommand: cd Backend && npm install --include=dev && npm run build
     startCommand: cd Backend && npm start
     envVars:
       - key: NODE_ENV
@@ -41,7 +41,7 @@ services:
     name: droppio-backend-production
     env: node
     plan: starter
-    buildCommand: cd Backend && npm ci && npm run build
+    buildCommand: cd Backend && npm install --include=dev && npm run build
     startCommand: cd Backend && npm start
     envVars:
       - key: NODE_ENV
