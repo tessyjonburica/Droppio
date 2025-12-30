@@ -14,16 +14,6 @@ interface SuccessModalProps {
 }
 
 export function SuccessModal({ isOpen, onClose, amount, creatorName, txHash }: SuccessModalProps) {
-    const [showConfetti, setShowConfetti] = useState(false);
-
-    useEffect(() => {
-        if (isOpen) {
-            setShowConfetti(true);
-            const timer = setTimeout(() => setShowConfetti(false), 3000);
-            return () => clearTimeout(timer);
-        }
-    }, [isOpen]);
-
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="sm:max-w-md">
