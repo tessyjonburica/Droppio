@@ -14,7 +14,7 @@ import { useAuth } from '@/hooks/use-auth';
 
 export default function OnboardPage() {
   const router = useRouter();
-  const { address, isConnected } = useAccount();
+  const { address } = useAccount();
   const { isAuthenticated, user } = useAuth();
   const { toast } = useToast();
   const [displayName, setDisplayName] = useState('');

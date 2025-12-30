@@ -12,7 +12,7 @@ import { ArrowLeft, Video, Key } from 'lucide-react';
 
 export default function StreamManagementPage() {
   const router = useRouter();
-  const { user } = useAuth();
+  useAuth();
   const { toast } = useToast();
   const [platform, setPlatform] = useState<'twitch' | 'youtube' | 'kick' | 'tiktok' | ''>('');
   const [streamKey, setStreamKey] = useState('');

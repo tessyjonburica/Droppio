@@ -26,7 +26,7 @@ export default function TipPage() {
   const username = params.username as string;
   const { address, isConnected } = useAccount();
   const { toast } = useToast();
-  const { user, isAuthenticated, setHasHydrated, _hasHydrated } = useAuthStore();
+  const { user, isAuthenticated } = useAuthStore();
   const [creator, setCreator] = useState<CreatorProfile | null>(null);
   const [isLoadingCreator, setIsLoadingCreator] = useState(true);
   const [activeStream, setActiveStream] = useState<any>(null);

@@ -18,7 +18,7 @@ export function Header() {
         <nav className="flex items-center gap-4">
           {isAuthenticated && user ? (
             <>
-              {(user.role === 'creator' || user.role === 'admin') && (
+              {user.role === 'creator' && (
                 <Link href="/dashboard">
                   <Button variant="ghost">Dashboard</Button>
                 </Link>

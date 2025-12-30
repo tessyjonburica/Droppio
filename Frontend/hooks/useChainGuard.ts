@@ -20,7 +20,7 @@ export interface UseChainGuardReturn {
  * Provides switch function if on wrong network
  */
 export function useChainGuard(): UseChainGuardReturn {
-  const { isConnected } = useAccount();
+  useAccount();
   const chainId = useChainId();
   const { switchChain, isPending: isSwitching, error } = useSwitchChain();
 

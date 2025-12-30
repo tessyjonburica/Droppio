@@ -2,7 +2,6 @@
 
 import { useAccount, useConnect, useDisconnect } from 'wagmi';
 import { Button } from '@/components/ui/button';
-import { useEffect } from 'react';
 
 export function WalletConnect({ showDisconnect = true }: { showDisconnect?: boolean }) {
   const { address, isConnected } = useAccount();
@@ -38,4 +37,3 @@ export function WalletConnect({ showDisconnect = true }: { showDisconnect?: bool
     </div>
   );
 }
-

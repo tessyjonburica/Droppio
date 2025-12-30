@@ -8,9 +8,7 @@ import {
     Settings,
     Video,
     History,
-    ExternalLink,
-    Wallet,
-    Zap
+    ExternalLink
 } from 'lucide-react';
 
 interface SidebarProps {

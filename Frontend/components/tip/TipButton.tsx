@@ -22,7 +22,7 @@ interface TipButtonProps {
  * Handles tip transaction with proper UX states
  */
 export function TipButton({ creatorAddress, amountEth, disabled, className }: TipButtonProps) {
-  const { sendTip, state, txHash, error, reset } = useTip({
+  const { sendTip, state, txHash, error } = useTip({
     onSuccess: (hash) => {
       toast({
         title: 'Tip sent!',
