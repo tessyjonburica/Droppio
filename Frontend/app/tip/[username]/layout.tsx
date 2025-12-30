@@ -3,11 +3,11 @@ import { generateTipPageMetadata } from './metadata';
 import { creatorService } from '@/services/creator.service';
 
 type Props = {
-  params: { username: string };
+  params: Promise<{ username: string }>;
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { username } = params;
+  const { username } = await params;
   let creator = null;
 
   try {
