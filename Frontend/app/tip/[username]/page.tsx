@@ -37,7 +37,7 @@ export default function TipPage() {
   const [recentTips, setRecentTips] = useState<TipResponse[]>([]);
 
   // Real Tip Hook
-  const { sendTip: sendOnChainTip, state: tipState, error: tipError } = useTip();
+  const { sendTip: sendOnChainTip, state: tipState } = useTip();
 
   // Load creator profile
   useEffect(() => {
