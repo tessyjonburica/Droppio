@@ -59,7 +59,7 @@ export const creatorService = {
       allCreators.map(async creator => {
         const tips = await tipModel.findByCreatorId(creator.id);
         const totalTips = tips.reduce((sum, tip) => {
-          return sum + parseFloat(tip.amount_usdc || '0');
+          return sum + parseFloat(tip.amount_eth || '0');
         }, 0);
 
         return {
@@ -85,7 +85,7 @@ export const creatorService = {
   ): Promise<{ totalTips: string; totalTipsCount: number }> => {
     const tips = await tipModel.findByCreatorId(creatorId);
     const totalTips = tips.reduce((sum, tip) => {
-      return sum + parseFloat(tip.amount_usdc || '0');
+      return sum + parseFloat(tip.amount_eth || '0');
     }, 0);
 
     return {
@@ -106,10 +106,10 @@ export const creatorService = {
           ...tip,
           viewer: viewer
             ? {
-                id: viewer.id,
-                wallet_address: viewer.wallet_address,
-                display_name: viewer.display_name,
-              }
+              id: viewer.id,
+              wallet_address: viewer.wallet_address,
+              display_name: viewer.display_name,
+            }
             : null,
         };
       })
