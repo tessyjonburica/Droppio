@@ -6,7 +6,7 @@ import { Header } from '@/components/layout/header';
 import { Logo } from '@/components/brand/logo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { creatorService, FeaturedCreator } from '@/services/creator.service';
 import { Search, TrendingUp, Zap, Shield, Heart } from 'lucide-react';
 import Link from 'next/link';
@@ -165,9 +165,9 @@ export default function Home() {
                 )}
               </div>
 
-              <div className="flex gap-4 justify-center">
-                <Link href="/creator-login">
-                  <Button size="lg" className="text-lg px-8">
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Link href="/creator-login" className="w-full sm:w-auto">
+                  <Button size="lg" className="text-lg px-8 w-full">
                     Become a Creator
                   </Button>
                 </Link>
@@ -175,7 +175,7 @@ export default function Home() {
                   onClick={() => {
                     document.getElementById('featured-creators')?.scrollIntoView({ behavior: 'smooth' });
                   }}
-                  className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-lg font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-11 px-8"
+                  className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-lg font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-11 px-8 w-full sm:w-auto"
                 >
                   Browse Creators
                 </button>
@@ -234,7 +234,7 @@ export default function Home() {
 
         {/* Featured Creators */}
         {featuredCreators.length > 0 && (
-          <section className="py-20 bg-soft-mint">
+          <section id="featured-creators" className="py-20 bg-soft-mint">
             <div className="container mx-auto px-4">
               <div className="max-w-6xl mx-auto">
                 <div className="flex items-center gap-3 mb-8">
@@ -243,7 +243,7 @@ export default function Home() {
                     Featured Creators
                   </h2>
                 </div>
-                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
                   {featuredCreators.map((creator) => (
                     <Link
                       key={creator.id}
@@ -251,12 +251,12 @@ export default function Home() {
                     >
                       <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
                         <CardHeader>
-                          <div className="flex items-center gap-4 mb-4">
+                          <div className="flex items-center gap-4">
                             {creator.avatar_url ? (
                               <img
                                 src={creator.avatar_url}
                                 alt={creator.display_name || 'Creator'}
-                                className="w-16 h-16 rounded-full"
+                                className="w-16 h-16 rounded-full object-cover"
                               />
                             ) : (
                               <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center">
@@ -270,22 +270,13 @@ export default function Home() {
                                 {creator.display_name || `${creator.wallet_address.slice(0, 6)}...`}
                               </CardTitle>
                               {creator.platform && (
-                                <CardDescription>{creator.platform}</CardDescription>
+                                <CardDescription className="capitalize">
+                                  {creator.platform}
+                                </CardDescription>
                               )}
                             </div>
                           </div>
                         </CardHeader>
-                        <CardContent>
-                          <div className="space-y-1">
-                            <p className="text-sm text-muted-foreground">Total Tips</p>
-                            <p className="text-2xl font-bold text-primary">
-                              {parseFloat(creator.total_tips).toFixed(2)} ETH
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {creator.total_tips_count} tip{creator.total_tips_count !== 1 ? 's' : ''}
-                            </p>
-                          </div>
-                        </CardContent>
                       </Card>
                     </Link>
                   ))}
