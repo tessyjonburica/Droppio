@@ -30,6 +30,7 @@ export function WalletConnect({ showDisconnect = true }: { showDisconnect?: bool
       const timer = setTimeout(() => reset(), 5000);
       return () => clearTimeout(timer);
     }
+    return;
   }, [error, toast, reset]);
 
   // Filter and prioritize connectors
