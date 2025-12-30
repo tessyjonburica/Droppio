@@ -3,7 +3,6 @@
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { CheckCircle2, Sparkles } from 'lucide-react';
-import { useEffect, useState } from 'react';
 
 interface SuccessModalProps {
     isOpen: boolean;
