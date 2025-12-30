@@ -318,7 +318,6 @@ export default function DashboardPage() {
               <div className="space-y-4">
                 {recentTips.map((tip) => {
                   const tipId = tip.tipId || tip.id || Math.random().toString();
-                  const viewerName = tip.viewer?.displayName || tip.viewer?.display_name;
                   const viewerAddress = tip.viewer?.walletAddress || tip.viewer?.wallet_address || '';
                   const amount = tip.amount || tip.amount_eth;
                   const timestamp = tip.timestamp || tip.created_at;
