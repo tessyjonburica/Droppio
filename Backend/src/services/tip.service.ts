@@ -1,12 +1,13 @@
 import { SendTipInput, TipResponse } from '../types/tip';
 import { tipModel } from '../models/tip.model';
 import { verifyWalletSignature } from '../utils/signature';
-import { verifyUSDCTransaction } from '../utils/blockchain';
+import { verifyETHTransaction } from '../utils/blockchain';
 import { streamModel } from '../models/stream.model';
 import { userModel } from '../models/user.model';
 import { streamerWsHelpers } from '../websockets/streamer.ws';
 import { overlayWsHelpers } from '../websockets/overlay.ws';
 import { logger } from '../utils/logger';
+import { env } from '../config/env';
 
 export const tipService = {
   sendTip: async (walletAddress: string, input: SendTipInput): Promise<TipResponse> => {
@@ -18,7 +19,7 @@ export const tipService = {
     }
 
     // Validate amount > 0
-    const amount = parseFloat(input.amountUsdc);
+    const amount = parseFloat(input.amountEth);
     if (isNaN(amount) || amount <= 0) {
       throw new Error('Invalid tip amount');
     }
@@ -57,13 +58,14 @@ export const tipService = {
     }
 
     // Verify transaction hash with ethers provider
-    // In development mode, we allow bypassing this for easier testing
+    // In development mode or if explicitly skipped, we allow bypassing this
     let isValidTx = false;
-    if (process.env.NODE_ENV === 'development' && input.txHash.startsWith('0x0000')) {
-      logger.info('Bypassing blockchain verification in development mode');
+    if (env.SKIP_BLOCKCHAIN_VERIFICATION || (process.env.NODE_ENV === 'development' && input.txHash.startsWith('0x0000'))) {
+      logger.info('Bypassing blockchain verification');
       isValidTx = true;
     } else {
-      isValidTx = await verifyUSDCTransaction(input.txHash, input.amountUsdc, walletAddress);
+      // verifyETHTransaction takes (txHash, expectedAmount, fromAddress)
+      isValidTx = await verifyETHTransaction(input.txHash, input.amountEth, walletAddress);
     }
 
     if (!isValidTx) {
@@ -85,7 +87,7 @@ export const tipService = {
     // Always emit WebSocket event to streamer dashboard (regardless of live status)
     streamerWsHelpers.notifyTipReceived(creatorId, {
       tipId: tip.id,
-      amount: tip.amount_usdc,
+      amount: tip.amount_eth,
       viewer: {
         id: viewer.id,
         walletAddress: viewer.wallet_address,
@@ -97,7 +99,7 @@ export const tipService = {
     if (stream && stream.is_live) {
       overlayWsHelpers.notifyTipEvent(creatorId, {
         tipId: tip.id,
-        amount: tip.amount_usdc,
+        amount: tip.amount_eth,
         viewer: {
           displayName: viewer.display_name,
           walletAddress: viewer.wallet_address,
@@ -121,6 +123,6 @@ export const tipService = {
     fromAddress: string
   ): Promise<boolean> => {
     // Verify transaction using blockchain utilities
-    return verifyUSDCTransaction(txHash, expectedAmount, fromAddress);
+    return verifyETHTransaction(txHash, expectedAmount, fromAddress);
   },
 };

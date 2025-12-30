@@ -29,9 +29,10 @@ const envSchema = z.object({
   // Blockchain
   USDC_BASE_CONTRACT_ADDRESS: z.string().regex(/^0x[a-fA-F0-9]{40}$/),
   DROPPIO_CONTRACT_ADDRESS: z.string().regex(/^0x[a-fA-F0-9]{40}$/),
-  BASE_RPC_URL: z.string().url(),
-  BASE_WS_RPC: z.string().url(),
-  CHAIN_ID: z.string().default('8453'),
+  BASE_RPC_URL: z.string().url().default('https://sepolia.base.org'),
+  BASE_WS_RPC: z.string().url().default('wss://sepolia.base.org'),
+  CHAIN_ID: z.string().default('84532'),
+  SKIP_BLOCKCHAIN_VERIFICATION: z.enum(['true', 'false']).default('false').transform(v => v === 'true'),
 
   // WebSocket
   WS_PORT: z.string().default('3001'),

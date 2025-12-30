@@ -21,6 +21,8 @@ import { useAuthStore } from '@/store/auth-store';
 import { authService } from '@/services/auth.service';
 
 
+import { useTip } from '@/hooks/useTip';
+
 export default function TipPage() {
   const params = useParams();
   const username = params.username as string;
@@ -31,9 +33,11 @@ export default function TipPage() {
   const [isLoadingCreator, setIsLoadingCreator] = useState(true);
   const [activeStream, setActiveStream] = useState<any>(null);
   const [amount, setAmount] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [recentTips, setRecentTips] = useState<TipResponse[]>([]);
+
+  // Real Tip Hook
+  const { sendTip: sendOnChainTip, state: tipState, error: tipError } = useTip();
 
   // Load creator profile
   useEffect(() => {
@@ -170,33 +174,25 @@ export default function TipPage() {
       return;
     }
 
-    setIsLoading(true);
-
     try {
-      // Generate signature for tip
-      if (!window.ethereum) {
-        throw new Error('Wallet not available');
-      }
+      // 1. Send Real On-Chain ETH Transaction
+      const hash = await sendOnChainTip(creator.wallet_address, amount);
+      if (!hash) return; // Hook already handles error state
+
+      // 2. Generate signature for Backend record (to prove viewer intent)
+      if (!window.ethereum) throw new Error('Wallet not available');
       const provider = new ethers.BrowserProvider(window.ethereum);
       const timestamp = Date.now();
       const message = generateMessage(address, timestamp);
       const signer = await provider.getSigner();
       const signature = await signer.signMessage(message);
 
-      // For MVP, we'll simulate the transaction
-      // In production, this would interact with the smart contract
-      // In development, use a special prefix to bypass backend verification
-      const isDev = process.env.NODE_ENV === 'development';
-      const txHash = isDev
-        ? `0x0000${Math.random().toString(16).slice(2).padStart(60, '0')}`
-        : `0x${Math.random().toString(16).slice(2).padStart(64, '0')}`;
-
-      // Send tip with streamId if live, or creatorId if offline
+      // 3. Notify Backend with Tx Hash and Signature
       const tipData: any = {
-        amountUsdc: tipAmount.toFixed(6),
+        amountEth: tipAmount.toString(),
         signature,
         message,
-        txHash,
+        txHash: hash,
       };
 
       if (activeStream) {
@@ -205,15 +201,14 @@ export default function TipPage() {
         tipData.creatorId = creator.id;
       }
 
-      // Add a test flag if needed or handle blockchain bypass in backend
       const newTip = await tipService.sendTip(tipData);
 
-      // Add new tip to recent tips
+      // 4. Update UI
       setRecentTips((prev) => [newTip, ...prev].slice(0, 10));
 
       toast({
-        title: 'Tip sent!',
-        description: `You sent ${tipAmount} USDC to ${creator.display_name || 'creator'}`,
+        title: 'Tip recorded!',
+        description: `You sent ${tipAmount} ETH to ${creator.display_name || 'creator'}`,
       });
 
       setAmount('');
@@ -223,10 +218,9 @@ export default function TipPage() {
         description: error.message || 'Failed to send tip',
         variant: 'destructive',
       });
-    } finally {
-      setIsLoading(false);
     }
   };
+
 
   if (isLoadingCreator) {
     return (
@@ -322,17 +316,17 @@ export default function TipPage() {
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <label htmlFor="amount" className="text-sm font-medium">
-                    Amount (USDC)
+                    Amount (ETH)
                   </label>
                   <Input
                     id="amount"
                     type="number"
-                    step="0.01"
+                    step="0.0001"
                     min="0"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
-                    placeholder="0.00"
-                    disabled={!isAuthenticated || !creator}
+                    placeholder="0.0000"
+                    disabled={!isAuthenticated || !creator || tipState === 'pending'}
                   />
                 </div>
                 {!isAuthenticated ? (
@@ -356,10 +350,10 @@ export default function TipPage() {
                   <div className="space-y-2">
                     <Button
                       onClick={handleTip}
-                      disabled={isLoading || !creator || !amount}
+                      disabled={tipState === 'pending' || !creator || !amount}
                       className="w-full"
                     >
-                      {isLoading ? 'Processing...' : `Tip ${creator?.display_name || 'Creator'}`}
+                      {tipState === 'pending' ? 'Processing...' : `Tip ${creator?.display_name || 'Creator'}`}
                     </Button>
                     <p className="text-xs text-muted-foreground text-center">
                       Signed in as {user?.walletAddress.slice(0, 6)}...{user?.walletAddress.slice(-4)}
@@ -399,7 +393,7 @@ export default function TipPage() {
                             </p>
                           </div>
                           <div className="text-right">
-                            <p className="font-bold text-primary">{tip.amount_usdc} USDC</p>
+                            <p className="font-bold text-primary">{tip.amount_eth} ETH</p>
                           </div>
                         </div>
                       );

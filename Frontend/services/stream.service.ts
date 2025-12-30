@@ -25,8 +25,8 @@ export interface StreamResponse extends Stream {
 
 export const streamService = {
   async startStream(data: StartStreamInput): Promise<StreamResponse> {
-    const response = await api.post<StreamResponse>('/streams/start', data);
-    return response.data;
+    const response = await api.post<{ stream: StreamResponse }>('/streams/start', data);
+    return response.data.stream;
   },
 
   async endStream(streamId: string): Promise<void> {
@@ -34,14 +34,14 @@ export const streamService = {
   },
 
   async getStream(streamId: string): Promise<StreamResponse> {
-    const response = await api.get<StreamResponse>(`/streams/${streamId}`);
-    return response.data;
+    const response = await api.get<{ stream: StreamResponse }>(`/streams/${streamId}`);
+    return response.data.stream;
   },
 
   async getActiveStream(streamerId: string): Promise<StreamResponse | null> {
     try {
-      const response = await api.get<StreamResponse>(`/streams/active/${streamerId}`);
-      return response.data;
+      const response = await api.get<{ stream: StreamResponse | null }>(`/streams/active/${streamerId}`);
+      return response.data.stream;
     } catch (error: any) {
       if (error.response?.status === 404) {
         return null;

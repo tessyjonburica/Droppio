@@ -1,9 +1,9 @@
 export interface Tip {
   id: string;
-  creator_id?: string; // Optional for backward compatibility
+  creator_id?: string;
   stream_id: string | null;
   viewer_id: string;
-  amount_usdc: string; // Numeric as string (stores ETH value)
+  amount_eth: string; // Numeric as string
   tx_hash: string | null;
   created_at: Date;
 }
@@ -11,7 +11,7 @@ export interface Tip {
 export interface SendTipInput {
   streamId?: string; // Optional - if provided, tip is associated with stream
   creatorId?: string; // Optional - if provided, tip is offline (no stream)
-  amountUsdc: string;
+  amountEth: string;
   signature: string;
   message: string;
   txHash: string;

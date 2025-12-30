@@ -59,7 +59,7 @@ export const streamController = {
       const { streamer_id } = req.params;
       const stream = await streamService.getActiveStream(streamer_id);
       if (!stream) {
-        res.status(404).json({ error: 'No active stream found' });
+        res.status(200).json({ stream: null });
         return;
       }
       res.status(200).json({ stream });

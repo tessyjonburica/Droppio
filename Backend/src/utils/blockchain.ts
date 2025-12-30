@@ -14,111 +14,70 @@ export const getProvider = (): ethers.JsonRpcProvider => {
   return provider;
 };
 
-// USDC contract ABI (minimal - only what we need)
-const USDC_ABI = [
-  'function decimals() view returns (uint8)',
-  'event Transfer(address indexed from, address indexed to, uint256 value)',
-];
-
-// Verify transaction with USDC Base contract
-export const verifyUSDCTransaction = async (
+// Verify Native ETH transaction on Base
+export const verifyETHTransaction = async (
   txHash: string,
   expectedAmount: string,
   fromAddress: string
 ): Promise<boolean> => {
   try {
     const providerInstance = getProvider();
-    const receipt = await providerInstance.getTransactionReceipt(txHash);
+    const [receipt, tx] = await Promise.all([
+      providerInstance.getTransactionReceipt(txHash),
+      providerInstance.getTransaction(txHash),
+    ]);
 
-    if (!receipt) {
+    if (!receipt || !tx) {
       return false;
     }
 
+    // Check if transaction was successful
     if (receipt.status !== 1) {
       return false;
     }
 
-    // Get transaction details
-    const tx = await providerInstance.getTransaction(txHash);
-    if (!tx) {
-      return false;
-    }
-
     // Verify transaction is from expected address
-    if (tx.from?.toLowerCase() !== fromAddress.toLowerCase()) {
+    if (tx.from.toLowerCase() !== fromAddress.toLowerCase()) {
       return false;
     }
 
-    // Parse logs to find USDC transfer
-    const usdcContract = new ethers.Contract(USDC_BASE_ADDRESS, USDC_ABI, providerInstance);
-    const decimals = await usdcContract.decimals();
+    // Convert expected amount (ETH) to Wei
+    const expectedAmountWei = ethers.parseEther(expectedAmount);
 
-    // Check if transaction was to USDC contract or involved USDC transfer
-    let usdcTransferred = false;
-    let actualAmount = BigInt(0);
-
-    if (receipt.logs) {
-      const transferInterface = new ethers.Interface([
-        'event Transfer(address indexed from, address indexed to, uint256 value)',
-      ]);
-
-      for (const log of receipt.logs) {
-        if (log.address.toLowerCase() === USDC_BASE_ADDRESS) {
-          try {
-            const parsedLog = transferInterface.parseLog(log);
-            if (parsedLog && parsedLog.name === 'Transfer') {
-              usdcTransferred = true;
-              actualAmount = parsedLog.args.value as bigint;
-
-              // Verify from address matches
-              if (parsedLog.args.from.toLowerCase() !== fromAddress.toLowerCase()) {
-                return false;
-              }
-
-              break;
-            }
-          } catch {
-            // Not a transfer event, continue
-          }
-        }
-      }
-    }
-
-    if (!usdcTransferred) {
+    // Verify value sent (Native ETH)
+    // We check if tx.value is exactly what was expected
+    // Note: tx.value is a bigint
+    if (tx.value < expectedAmountWei) {
       return false;
     }
 
-    // Convert expected amount to BigInt (6 decimals for USDC)
-    const expectedAmountBigInt = ethers.parseUnits(expectedAmount, decimals);
-
-    // Verify amount matches (allow small tolerance for gas fees if applicable)
-    return actualAmount >= expectedAmountBigInt;
+    return true;
   } catch (error) {
+    console.error('ETH Verification error:', error);
     return false;
   }
 };
 
-// Parse USDC amount (handle 6 decimal places)
-export const parseUSDCAmount = (amount: string): string => {
+// Parse ETH amount (Native currency)
+export const parseETHAmount = (amount: string): string => {
   try {
     const num = parseFloat(amount);
     if (isNaN(num) || num < 0) {
       throw new Error('Invalid amount');
     }
-    // USDC has 6 decimals
-    return ethers.parseUnits(amount, 6).toString();
+    return ethers.parseEther(amount).toString();
   } catch {
-    throw new Error('Invalid USDC amount format');
+    throw new Error('Invalid ETH amount format');
   }
 };
 
-// Format USDC amount for display
-export const formatUSDCAmount = (amount: bigint | string): string => {
+// Format ETH amount for display
+export const formatETHAmount = (amount: bigint | string): string => {
   try {
     const amountBigInt = typeof amount === 'string' ? BigInt(amount) : amount;
-    // USDC has 6 decimals
-    return ethers.formatUnits(amountBigInt, 6);
+    return ethers.formatEther(amountBigInt);
   } catch {
     return '0';
   }
 };
+

@@ -3,7 +3,7 @@ import { api } from './api';
 export interface SendTipInput {
   streamId?: string; // Optional - if provided, tip is associated with stream
   creatorId?: string; // Optional - if provided, tip is offline (no stream)
-  amountUsdc: string;
+  amountEth: string;
   signature: string;
   message: string;
   txHash: string;
@@ -13,7 +13,7 @@ export interface Tip {
   id: string;
   stream_id: string;
   viewer_id: string;
-  amount_usdc: string;
+  amount_eth: string;
   tx_hash: string | null;
   created_at: string;
 }

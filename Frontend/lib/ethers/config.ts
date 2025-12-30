@@ -1,11 +1,11 @@
 // Base Chain Configuration
 // Contract address and chain settings
 
-import { base } from 'wagmi/chains';
+import { baseSepolia } from 'wagmi/chains';
 
-export const BASE_CHAIN = base;
+export const BASE_CHAIN = baseSepolia;
 
-export const BASE_CHAIN_ID = base.id; // 8453
+export const BASE_CHAIN_ID = baseSepolia.id; // 84532
 
 // Contract address - set via environment variable
 export const DROPPIO_CONTRACT_ADDRESS = (process.env.NEXT_PUBLIC_CONTRACT_ADDRESS ||

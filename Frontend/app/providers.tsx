@@ -2,13 +2,13 @@
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { WagmiProvider, createConfig, http } from 'wagmi';
-import { base } from 'wagmi/chains';
+import { baseSepolia } from 'wagmi/chains';
 import { injected, coinbaseWallet, walletConnect, metaMask } from 'wagmi/connectors';
 import { useState } from 'react';
 import { Toaster } from '@/components/ui/toaster';
 
 const config = createConfig({
-  chains: [base],
+  chains: [baseSepolia],
   connectors: [
     metaMask(),
     coinbaseWallet({
@@ -20,7 +20,7 @@ const config = createConfig({
     injected(),
   ],
   transports: {
-    [base.id]: http(process.env.NEXT_PUBLIC_BASE_RPC_URL || 'https://mainnet.base.org'),
+    [baseSepolia.id]: http(process.env.NEXT_PUBLIC_BASE_RPC_URL || 'https://sepolia.base.org'),
   },
 });
 
