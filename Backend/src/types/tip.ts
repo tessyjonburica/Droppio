@@ -12,8 +12,8 @@ export interface SendTipInput {
   streamId?: string; // Optional - if provided, tip is associated with stream
   creatorId?: string; // Optional - if provided, tip is offline (no stream)
   amountEth: string;
-  signature: string;
-  message: string;
+  signature?: string;
+  message?: string;
   txHash: string;
 }
 

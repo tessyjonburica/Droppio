@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
+import { WithdrawButton } from '@/components/dashboard/WithdrawButton';
 
 export default function DashboardPage() {
   const { isAuthenticated, user } = useAuth();
@@ -121,7 +122,7 @@ export default function DashboardPage() {
       }));
       toast({
         title: 'New tip received!',
-        description: `${event.data.amount} USDC from ${event.data.viewer.displayName || `${event.data.viewer.walletAddress.slice(0, 6)}...`}`,
+        description: `${event.data.amount} ETH from ${event.data.viewer.displayName || `${event.data.viewer.walletAddress.slice(0, 6)}...`}`,
       });
     }
   }, [toast]);
@@ -160,7 +161,7 @@ export default function DashboardPage() {
             <Wallet className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalTips} USDC</div>
+            <div className="text-2xl font-bold">{stats.totalTips} ETH</div>
             <p className="text-xs text-muted-foreground">Across all tips</p>
           </CardContent>
         </Card>
@@ -286,6 +287,16 @@ export default function DashboardPage() {
               )}
             </CardContent>
           </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Withdraw Earnings</CardTitle>
+              <CardDescription>Transfer your accumulated tips to your wallet</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <WithdrawButton />
+            </CardContent>
+          </Card>
         </div>
 
         {/* Recent Tips */}
@@ -311,7 +322,7 @@ export default function DashboardPage() {
                   const tipId = tip.tipId || tip.id || Math.random().toString();
                   const viewerName = tip.viewer?.displayName || tip.viewer?.display_name;
                   const viewerAddress = tip.viewer?.walletAddress || tip.viewer?.wallet_address || '';
-                  const amount = tip.amount || tip.amount_usdc;
+                  const amount = tip.amount || tip.amount_eth;
                   const timestamp = tip.timestamp || tip.created_at;
 
                   return (
@@ -335,7 +346,7 @@ export default function DashboardPage() {
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="font-bold text-lg text-primary">{amount} USDC</p>
+                        <p className="font-bold text-lg text-primary">{amount} ETH</p>
                       </div>
                     </div>
                   );

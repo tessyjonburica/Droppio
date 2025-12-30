@@ -16,6 +16,32 @@ export const DROPPIO_ABI = [
     type: 'function',
   },
   {
+    inputs: [],
+    name: 'withdraw',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
+    inputs: [
+      {
+        internalType: 'address',
+        name: '',
+        type: 'address',
+      },
+    ],
+    name: 'balances',
+    outputs: [
+      {
+        internalType: 'uint256',
+        name: '',
+        type: 'uint256',
+      },
+    ],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
     anonymous: false,
     inputs: [
       {
@@ -46,10 +72,30 @@ export const DROPPIO_ABI = [
     name: 'TipSent',
     type: 'event',
   },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: 'address',
+        name: 'creator',
+        type: 'address',
+      },
+      {
+        indexed: false,
+        internalType: 'uint256',
+        name: 'amount',
+        type: 'uint256',
+      },
+    ],
+    name: 'Withdraw',
+    type: 'event',
+  },
 ] as const;
 
 // Type exports for contract interaction
 export type DroppioContract = {
   tip: (to: string, overrides?: { value: bigint }) => Promise<{ hash: string; wait: () => Promise<any> }>;
+  withdraw: () => Promise<{ hash: string; wait: () => Promise<any> }>;
+  balances: (address: string) => Promise<bigint>;
 };
-

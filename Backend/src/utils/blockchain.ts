@@ -22,10 +22,25 @@ export const verifyETHTransaction = async (
 ): Promise<boolean> => {
   try {
     const providerInstance = getProvider();
-    const [receipt, tx] = await Promise.all([
-      providerInstance.getTransactionReceipt(txHash),
-      providerInstance.getTransaction(txHash),
-    ]);
+
+    // Retry mechanism for receipt (RPC nodes/indexers might be slightly behind)
+    let receipt = null;
+    let tx = null;
+    let retries = 3;
+
+    while (retries > 0 && (!receipt || !tx)) {
+      [receipt, tx] = await Promise.all([
+        providerInstance.getTransactionReceipt(txHash),
+        providerInstance.getTransaction(txHash),
+      ]);
+
+      if (!receipt || !tx) {
+        retries--;
+        if (retries > 0) {
+          await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds before retry
+        }
+      }
+    }
 
     if (!receipt || !tx) {
       return false;

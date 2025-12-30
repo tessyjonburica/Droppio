@@ -73,11 +73,12 @@ export function useTip(options?: UseTipOptions): UseTipReturn {
           value: amountWei,
         });
 
+        // Wait for transaction confirmation (at least 1 block)
+        // This ensures the backend can find the receipt when we send the hash
+        await tx.wait(1);
+
         setTxHash(tx.hash);
         setState('success');
-
-        // Wait for transaction confirmation (optional - can be done async)
-        // await tx.wait();
 
         options?.onSuccess?.(tx.hash);
         return tx.hash;

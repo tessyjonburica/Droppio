@@ -11,11 +11,12 @@ import { env } from '../config/env';
 
 export const tipService = {
   sendTip: async (walletAddress: string, input: SendTipInput): Promise<TipResponse> => {
-    // Verify wallet signature matches viewer
-    const verification = await verifyWalletSignature(input.message, input.signature, walletAddress);
-
-    if (!verification.isValid) {
-      throw new Error('Invalid wallet signature');
+    // Verify wallet signature matches viewer (optional if already authenticated via JWT)
+    if (input.signature && input.message) {
+      const verification = await verifyWalletSignature(input.message, input.signature, walletAddress);
+      if (!verification.isValid) {
+        throw new Error('Invalid wallet signature');
+      }
     }
 
     // Validate amount > 0
@@ -76,6 +77,11 @@ export const tipService = {
     const creator = await userModel.findById(creatorId);
     if (!creator) {
       throw new Error('Creator not found');
+    }
+
+    // Prevention: Creators cannot tip themselves
+    if (walletAddress.toLowerCase() === creator.wallet_address.toLowerCase()) {
+      throw new Error('You cannot tip yourself');
     }
 
     // Create tip record in DB

@@ -19,9 +19,8 @@ import { generateMessage } from '@/utils/signature';
 import { formatDistanceToNow } from 'date-fns';
 import { useAuthStore } from '@/store/auth-store';
 import { authService } from '@/services/auth.service';
-
-
 import { useTip } from '@/hooks/useTip';
+import { SuccessModal } from '@/components/tip/SuccessModal';
 
 export default function TipPage() {
   const params = useParams();
@@ -38,6 +37,10 @@ export default function TipPage() {
 
   // Real Tip Hook
   const { sendTip: sendOnChainTip, state: tipState } = useTip();
+
+  // Success Modal State
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successTxHash, setSuccessTxHash] = useState('');
 
   // Load creator profile
   useEffect(() => {
@@ -164,6 +167,16 @@ export default function TipPage() {
       return;
     }
 
+    // Prevention: Creators cannot tip themselves
+    if (user?.walletAddress.toLowerCase() === creator.wallet_address.toLowerCase()) {
+      toast({
+        title: 'Action not allowed',
+        description: 'You cannot tip your own profile',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     const tipAmount = parseFloat(amount);
     if (isNaN(tipAmount) || tipAmount <= 0) {
       toast({
@@ -179,19 +192,9 @@ export default function TipPage() {
       const hash = await sendOnChainTip(creator.wallet_address, amount);
       if (!hash) return; // Hook already handles error state
 
-      // 2. Generate signature for Backend record (to prove viewer intent)
-      if (!window.ethereum) throw new Error('Wallet not available');
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const timestamp = Date.now();
-      const message = generateMessage(address, timestamp);
-      const signer = await provider.getSigner();
-      const signature = await signer.signMessage(message);
-
-      // 3. Notify Backend with Tx Hash and Signature
+      // 2. Notify Backend with Tx Hash
       const tipData: any = {
         amountEth: tipAmount.toString(),
-        signature,
-        message,
         txHash: hash,
       };
 
@@ -203,19 +206,16 @@ export default function TipPage() {
 
       const newTip = await tipService.sendTip(tipData);
 
-      // 4. Update UI
+      // 3. Update UI and show success modal
       setRecentTips((prev) => [newTip, ...prev].slice(0, 10));
-
-      toast({
-        title: 'Tip recorded!',
-        description: `You sent ${tipAmount} ETH to ${creator.display_name || 'creator'}`,
-      });
-
+      setSuccessTxHash(hash);
+      setShowSuccessModal(true);
       setAmount('');
     } catch (error: any) {
+      console.error('Tip execution error:', error);
       toast({
         title: 'Tip failed',
-        description: error.message || 'Failed to send tip',
+        description: error.message || 'Failed to send tip. Please try again.',
         variant: 'destructive',
       });
     }
@@ -405,6 +405,15 @@ export default function TipPage() {
           </div>
         </div>
       </main>
+
+      {/* Success Modal */}
+      <SuccessModal
+        isOpen={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        amount={amount}
+        creatorName={creator?.display_name || 'creator'}
+        txHash={successTxHash}
+      />
     </>
   );
 }
