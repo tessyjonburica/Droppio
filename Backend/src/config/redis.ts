@@ -12,7 +12,7 @@ const redisConfig: RedisOptions = {
   },
 };
 
-export const redis = new Redis(redisConfig);
+export const redis = env.REDIS_URL ? new Redis(env.REDIS_URL) : new Redis(redisConfig);
 
 redis.on('connect', () => {
   logger.info('Redis connected');

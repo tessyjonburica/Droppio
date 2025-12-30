@@ -23,18 +23,11 @@ services:
         sync: false
       - key: JWT_REFRESH_SECRET
         sync: false
-      - key: REDIS_HOST
+      - key: REDIS_URL
         fromService:
           type: redis
           name: redis-testnet
-          property: host
-      - key: REDIS_PORT
-        value: 6379
-      - key: REDIS_PASSWORD
-        fromService:
-          type: redis
-          name: redis-testnet
-          property: password
+          property: connectionString
       - key: DROPPIO_CONTRACT_ADDRESS
         sync: false
       - key: BASE_RPC_URL
@@ -66,18 +59,11 @@ services:
         sync: false
       - key: JWT_REFRESH_SECRET
         sync: false
-      - key: REDIS_HOST
+      - key: REDIS_URL
         fromService:
           type: redis
           name: redis-production
-          property: host
-      - key: REDIS_PORT
-        value: 6379
-      - key: REDIS_PASSWORD
-        fromService:
-          type: redis
-          name: redis-production
-          property: password
+          property: connectionString
       - key: DROPPIO_CONTRACT_ADDRESS
         sync: false
       - key: BASE_RPC_URL
@@ -90,9 +76,11 @@ services:
     name: redis-testnet
     plan: starter
     maxmemoryPolicy: allkeys-lru
+    ipAllowList: []
 
   - type: redis
     name: redis-production
     plan: starter
     maxmemoryPolicy: allkeys-lru
+    ipAllowList: []
 
