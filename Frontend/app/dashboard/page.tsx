@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/use-auth';
 import { streamService, Stream } from '@/services/stream.service';
 import { creatorService } from '@/services/creator.service';
-import { useWebSocket, StreamerChannelEvent } from '@/hooks/use-websocket';
+import { useWebSocket, StreamerChannelEvent, ViewerChannelEvent, OverlayChannelEvent } from '@/hooks/use-websocket';
 import { useAuthStore } from '@/store/auth-store';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -112,7 +112,7 @@ export default function DashboardPage() {
     }
   }, [user?.id]);
 
-  const handleWebSocketMessage = useCallback((event: StreamerChannelEvent) => {
+  const handleWebSocketMessage = useCallback((event: StreamerChannelEvent | ViewerChannelEvent | OverlayChannelEvent) => {
     if (event.type === 'tip_received') {
       setRecentTips((prev) => [event.data, ...prev].slice(0, 10));
       setStats(prev => ({

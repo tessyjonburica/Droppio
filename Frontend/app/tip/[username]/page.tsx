@@ -11,7 +11,7 @@ import { WalletConnect } from '@/components/auth/wallet-connect';
 import { tipService, TipResponse } from '@/services/tip.service';
 import { streamService } from '@/services/stream.service';
 import { creatorService, CreatorProfile } from '@/services/creator.service';
-import { useWebSocket, ViewerChannelEvent } from '@/hooks/use-websocket';
+import { useWebSocket, StreamerChannelEvent, ViewerChannelEvent, OverlayChannelEvent } from '@/hooks/use-websocket';
 import { usePolling } from '@/hooks/use-polling';
 import { useToast } from '@/hooks/use-toast';
 import { ethers } from 'ethers';
@@ -89,7 +89,7 @@ export default function TipPage() {
 
   // Load active stream
   const loadActiveStream = useCallback(async () => {
-    if (!creator?.id) return;
+    if (!creator?.id) return null;
     try {
       const stream = await streamService.getActiveStream(creator.id);
       setActiveStream(stream);
@@ -103,9 +103,11 @@ export default function TipPage() {
           console.error('Failed to load tips:', tipError);
         }
       }
+      return stream;
     } catch (error) {
       // Stream might not be active, that's okay
       setActiveStream(null);
+      return null;
     }
   }, [creator?.id]);
 
@@ -120,7 +122,7 @@ export default function TipPage() {
     channel: 'viewer',
     id: activeStream?.id || '',
     enabled: !!activeStream?.id,
-    onMessage: (event: ViewerChannelEvent) => {
+    onMessage: (event: StreamerChannelEvent | ViewerChannelEvent | OverlayChannelEvent) => {
       if (event.type === 'stream_started') {
         setActiveStream(event.data);
       } else if (event.type === 'stream_ended') {
