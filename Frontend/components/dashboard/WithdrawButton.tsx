@@ -85,8 +85,16 @@ export function WithdrawButton() {
                 description: `${balance} ETH has been transferred to your wallet`,
             });
 
-            // Reset balance
-            setBalance('0');
+            // Immediately check balance again to update UI
+            try {
+                const provider = new BrowserProvider(window.ethereum!);
+                const contract = getDroppioContract(provider);
+                const contractBalance = await contract.balances(address);
+                setBalance(formatEther(contractBalance));
+            } catch (error) {
+                console.error('Failed to refresh balance:', error);
+                setBalance('0');
+            }
         } catch (error: any) {
             console.error('Withdrawal error:', error);
 

@@ -116,16 +116,14 @@ export default function DashboardPage() {
   const handleWebSocketMessage = useCallback((event: StreamerChannelEvent | ViewerChannelEvent | OverlayChannelEvent) => {
     if (event.type === 'tip_received') {
       setRecentTips((prev) => [event.data, ...prev].slice(0, 10));
-      setStats(prev => ({
-        totalTips: (parseFloat(prev.totalTips) + parseFloat(event.data.amount)).toFixed(2),
-        totalTipsCount: prev.totalTipsCount + 1
-      }));
+      // Reload stats to get updated totals from backend
+      loadStats();
       toast({
         title: 'New tip received!',
         description: `${event.data.amount} ETH from ${event.data.viewer.displayName || `${event.data.viewer.walletAddress.slice(0, 6)}...`}`,
       });
     }
-  }, [toast]);
+  }, [toast, loadStats]);
 
   const { isConnected } = useWebSocket({
     channel: 'streamer',
@@ -329,11 +327,11 @@ export default function DashboardPage() {
                     <div key={tipId} className="flex items-center justify-between p-4 border rounded-xl hover:bg-muted/50 transition-colors">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
-                          {(viewerName || 'V')[0].toUpperCase()}
+                          {viewerAddress ? viewerAddress.slice(2, 3).toUpperCase() : 'V'}
                         </div>
                         <div>
                           <p className="font-semibold">
-                            {viewerName || `${viewerAddress.slice(0, 6)}...${viewerAddress.slice(-4)}`}
+                            {viewerAddress ? `${viewerAddress.slice(0, 6)}...${viewerAddress.slice(-4)}` : 'Anonymous'}
                           </p>
                           <p className="text-xs text-muted-foreground">
                             {timestamp ? new Date(timestamp).toLocaleString() : 'Just now'}
