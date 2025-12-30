@@ -113,6 +113,29 @@ export default function DashboardPage() {
     }
   }, [user?.id]);
 
+  // Polling for stats and tips (fallback if WebSocket fails)
+
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const pollData = async () => {
+      await Promise.all([
+        loadStats(),
+        (async () => {
+          try {
+            const tips = await creatorService.getTipsByCreator(user.id);
+            setRecentTips(tips);
+          } catch (error) {
+            console.error('Failed to poll tips:', error);
+          }
+        })()
+      ]);
+    };
+
+    const interval = setInterval(pollData, 10000); // Poll every 10 seconds
+    return () => clearInterval(interval);
+  }, [user?.id, loadStats]);
+
   const handleWebSocketMessage = useCallback((event: StreamerChannelEvent | ViewerChannelEvent | OverlayChannelEvent) => {
     if (event.type === 'tip_received') {
       setRecentTips((prev) => [event.data, ...prev].slice(0, 10));
@@ -211,7 +234,7 @@ export default function DashboardPage() {
                 <Share2 className="h-5 w-5 text-primary" />
                 Tipping Link
               </CardTitle>
-              <CardDescription>Share this link with your viewers to receive crypto tips</CardDescription>
+              <CardDescription>Share this link with your audience to receive crypto tips</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex gap-2">
