@@ -46,7 +46,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'droppio',
-    description: 'Wallet-based streaming platform - Support creators with crypto tips',
+    description: 'Micro Tipping platform - Support creators with crypto tips',
     images: ['/og-image.png'],
   },
   robots: {

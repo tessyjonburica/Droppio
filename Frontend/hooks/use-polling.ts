@@ -12,13 +12,23 @@ interface UsePollingOptions<T> {
 export function usePolling<T>({ fetchFn, onData, interval = 5000, enabled = true }: UsePollingOptions<T>) {
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Use refs to handle unstable callbacks without resetting the interval
+  const savedFetchFn = useRef(fetchFn);
+  const savedOnData = useRef(onData);
+
+  // Update refs when props change
+  useEffect(() => {
+    savedFetchFn.current = fetchFn;
+    savedOnData.current = onData;
+  }, [fetchFn, onData]);
+
   useEffect(() => {
     if (!enabled) return;
 
     const poll = async () => {
       try {
-        const data = await fetchFn();
-        onData(data);
+        const data = await savedFetchFn.current();
+        savedOnData.current(data);
       } catch (error) {
         console.error('Polling error:', error);
       }
@@ -35,6 +45,5 @@ export function usePolling<T>({ fetchFn, onData, interval = 5000, enabled = true
         clearInterval(intervalRef.current);
       }
     };
-  }, [enabled, fetchFn, onData, interval]);
+  }, [enabled, interval]);
 }
-
