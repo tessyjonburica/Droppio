@@ -23,8 +23,8 @@ export const metadata: Metadata = {
     default: 'droppio',
     template: '%s | droppio',
   },
-  description: 'Wallet-based streaming platform - Support creators with crypto tips',
-  keywords: ['streaming', 'crypto', 'tips', 'blockchain', 'web3'],
+  description: 'Micro Tipping platform - Support creators with crypto tips',
+  keywords: ['Content creator', 'crypto', 'tips', 'blockchain', 'web3'],
   authors: [{ name: 'Droppio' }],
   creator: 'Droppio',
   openGraph: {
@@ -33,7 +33,7 @@ export const metadata: Metadata = {
     url: 'https://droppio.xyz',
     siteName: 'droppio',
     title: 'droppio',
-    description: 'Wallet-based streaming platform - Support creators with crypto tips',
+    description: 'Micro Tipping platform - Support creators with crypto tips',
     images: [
       {
         url: '/og-image.png',
