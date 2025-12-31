@@ -7,7 +7,7 @@ import { useState, useCallback } from 'react';
 import { useAccount, useWalletClient } from 'wagmi';
 import { Contract, parseEther } from 'ethers';
 import { clientToSigner } from '@/lib/ethers/adapter';
-import { getDroppioContractWithSigner } from '@/lib/ethers/contract'; // Keeping this if needed, or remove if unused. It was used before.
+
 
 export type TipState = 'idle' | 'pending' | 'success' | 'error';
 
