@@ -5,8 +5,9 @@
 
 import { useState, useCallback } from 'react';
 import { useAccount, useWalletClient } from 'wagmi';
-import { BrowserProvider, parseEther } from 'ethers';
-import { getDroppioContractWithSigner } from '@/lib/ethers/contract';
+import { Contract, parseEther } from 'ethers';
+import { clientToSigner } from '@/lib/ethers/adapter';
+import { getDroppioContractWithSigner } from '@/lib/ethers/contract'; // Keeping this if needed, or remove if unused. It was used before.
 
 export type TipState = 'idle' | 'pending' | 'success' | 'error';
 
@@ -64,9 +65,15 @@ export function useTip(options?: UseTipOptions): UseTipReturn {
         // Convert ETH to wei
         const amountWei = parseEther(amountEth);
 
-        // Create provider from wallet client
-        const provider = new BrowserProvider(walletClient.transport);
-        const contract = await getDroppioContractWithSigner(provider);
+        // Create signer from wallet client using adapter
+        const signer = clientToSigner(walletClient);
+
+        // Get contract with signer
+        const contract = new Contract(
+          (await import('@/lib/ethers/config')).DROPPIO_CONTRACT_ADDRESS,
+          (await import('@/lib/ethers/abi')).DROPPIO_ABI,
+          signer
+        );
 
         // Send tip transaction
         const tx = await contract.tip(creatorAddress, {
@@ -74,7 +81,6 @@ export function useTip(options?: UseTipOptions): UseTipReturn {
         });
 
         // Wait for transaction confirmation (at least 1 block)
-        // This ensures the backend can find the receipt when we send the hash
         await tx.wait(1);
 
         setTxHash(tx.hash);
@@ -83,6 +89,9 @@ export function useTip(options?: UseTipOptions): UseTipReturn {
         options?.onSuccess?.(tx.hash);
         return tx.hash;
       } catch (err) {
+        // Log the full error to console for debugging
+        console.error('Tip Error:', err);
+
         const tipError = err instanceof Error ? err : new Error('Failed to send tip');
 
         // Handle specific error cases
@@ -92,6 +101,9 @@ export function useTip(options?: UseTipOptions): UseTipReturn {
           tipError.message = 'Insufficient balance';
         } else if (tipError.message.includes('network') || tipError.message.includes('chain')) {
           tipError.message = 'Network error. Please check your connection.';
+        } else if (tipError.message.includes('Internal JSON-RPC error')) {
+          // Provide more helpful message for generic RPC errors
+          tipError.message = 'Wallet error. Please check your balance and network.';
         }
 
         setError(tipError);

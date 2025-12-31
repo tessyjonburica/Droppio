@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
-import { useAccount } from 'wagmi';
+import { useAccount, useSignMessage } from 'wagmi';
 import { Header } from '@/components/layout/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,7 +14,6 @@ import { creatorService, CreatorProfile } from '@/services/creator.service';
 import { useWebSocket, StreamerChannelEvent, ViewerChannelEvent, OverlayChannelEvent } from '@/hooks/use-websocket';
 import { usePolling } from '@/hooks/use-polling';
 import { useToast } from '@/hooks/use-toast';
-import { ethers } from 'ethers';
 import { generateMessage } from '@/utils/signature';
 import { formatDistanceToNow } from 'date-fns';
 import { useAuthStore } from '@/store/auth-store';
@@ -36,7 +35,8 @@ export default function TipPage() {
   const [recentTips, setRecentTips] = useState<TipResponse[]>([]);
 
   // Real Tip Hook
-  const { sendTip: sendOnChainTip, state: tipState } = useTip();
+  const { sendTip: sendOnChainTip, state: tipState, reset: resetTipState } = useTip();
+  const { signMessageAsync } = useSignMessage();
 
   // Success Modal State
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -65,12 +65,11 @@ export default function TipPage() {
 
     setIsLoggingIn(true);
     try {
-      if (!window.ethereum) throw new Error('Wallet not available');
-      const provider = new ethers.BrowserProvider(window.ethereum);
       const timestamp = Date.now();
       const message = generateMessage(address, timestamp);
-      const signer = await provider.getSigner();
-      const signature = await signer.signMessage(message);
+
+      // Use Wagmi hook for better mobile support
+      const signature = await signMessageAsync({ message });
 
       await authService.login({
         walletAddress: address,
@@ -219,6 +218,11 @@ export default function TipPage() {
         variant: 'destructive',
       });
     }
+  };
+
+  const handleCloseSuccess = () => {
+    setShowSuccessModal(false);
+    resetTipState();
   };
 
 
@@ -409,7 +413,7 @@ export default function TipPage() {
       {/* Success Modal */}
       <SuccessModal
         isOpen={showSuccessModal}
-        onClose={() => setShowSuccessModal(false)}
+        onClose={handleCloseSuccess}
         amount={amount}
         creatorName={creator?.display_name || 'creator'}
         txHash={successTxHash}
