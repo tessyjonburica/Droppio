@@ -93,6 +93,14 @@ export default function TipPage() {
     }
   };
 
+  // Auto-authenticate when wallet is connected but not authenticated
+  useEffect(() => {
+    if (isConnected && address && !isAuthenticated && !isLoggingIn) {
+      handleLogin();
+    }
+  }, [isConnected, address, isAuthenticated, isLoggingIn]);
+
+
   // Load active stream
   const loadActiveStream = useCallback(async () => {
     if (!creator?.id) return null;
