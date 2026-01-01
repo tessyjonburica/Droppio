@@ -74,7 +74,7 @@ export function useTip(options?: UseTipOptions): UseTipReturn {
           address: DROPPIO_CONTRACT_ADDRESS as `0x${string}`,
           abi: DROPPIO_ABI,
           functionName: 'tip',
-          args: [creatorAddress],
+          args: [creatorAddress as `0x${string}`],
           value: amountWei
         });
 
