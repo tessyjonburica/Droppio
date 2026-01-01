@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAccount } from 'wagmi';
+import { useAccount, useSignMessage } from 'wagmi';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 // import { Logo } from '@/components/brand/logo';
@@ -10,7 +10,7 @@ import { authService } from '@/services/auth.service';
 import { generateMessage } from '@/utils/signature';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import { ethers } from 'ethers';
+
 import { checkServerHealth } from '@/services/health-check';
 
 const WalletConnect = dynamic(() => import('@/components/auth/wallet-connect').then(mod => ({ default: mod.WalletConnect })), {
@@ -48,6 +48,7 @@ export default function CreatorLoginClient() {
     checkHealth();
   }, [toast]);
 
+  const { signMessageAsync } = useSignMessage();
   const handleLogin = async () => {
     if (!address || !isConnected) {
       toast({
@@ -73,14 +74,10 @@ export default function CreatorLoginClient() {
     setIsLoading(true);
 
     try {
-      if (!window.ethereum) {
-        throw new Error('Wallet not available');
-      }
-      const provider = new ethers.BrowserProvider(window.ethereum);
       const timestamp = Date.now();
       const message = generateMessage(address, timestamp);
-      const signer = await provider.getSigner();
-      const signature = await signer.signMessage(message);
+
+      const signature = await signMessageAsync({ message });
 
       const response = await authService.login({
         walletAddress: address,
@@ -107,9 +104,9 @@ export default function CreatorLoginClient() {
       let errorMessage = 'Failed to login';
 
       if (error instanceof Error) {
-        // Standard Error object (from auth.service.ts)
+        // Standard Error object
         errorMessage = error.message;
-      } else if (error?.code === 'ACTION_REJECTED' || error?.code === 4001 || error?.info?.error?.code === 4001) {
+      } else if (error?.cause?.code === 4001 || error?.code === 4001) {
         // User rejected the signature request
         errorMessage = 'Login cancelled';
         toast({

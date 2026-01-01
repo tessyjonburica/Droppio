@@ -4,10 +4,8 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { useAccount, useWalletClient } from 'wagmi';
-import { Contract, parseEther } from 'ethers';
-import { clientToSigner } from '@/lib/ethers/adapter';
-
+import { useAccount, useWriteContract, usePublicClient } from 'wagmi';
+import { parseEther } from 'viem';
 
 export type TipState = 'idle' | 'pending' | 'success' | 'error';
 
@@ -31,7 +29,9 @@ export interface UseTipOptions {
  */
 export function useTip(options?: UseTipOptions): UseTipReturn {
   const { address, isConnected } = useAccount();
-  const { data: walletClient } = useWalletClient();
+  const { writeContractAsync } = useWriteContract();
+  const publicClient = usePublicClient();
+
   const [state, setState] = useState<TipState>('idle');
   const [txHash, setTxHash] = useState<string | null>(null);
   const [error, setError] = useState<Error | null>(null);
@@ -49,8 +49,8 @@ export function useTip(options?: UseTipOptions): UseTipReturn {
           throw new Error('Wallet not connected');
         }
 
-        if (!walletClient) {
-          throw new Error('Wallet client not available');
+        if (!publicClient) {
+          throw new Error('Public client not available');
         }
 
         if (!creatorAddress || !creatorAddress.startsWith('0x')) {
@@ -62,48 +62,42 @@ export function useTip(options?: UseTipOptions): UseTipReturn {
           throw new Error('Invalid tip amount');
         }
 
-        // Convert ETH to wei
+        // Convert ETH to wei (using viem)
         const amountWei = parseEther(amountEth);
 
-        // Create signer from wallet client using adapter
-        const signer = clientToSigner(walletClient);
-
-        // Get contract with signer
-        const contract = new Contract(
-          (await import('@/lib/ethers/config')).DROPPIO_CONTRACT_ADDRESS,
-          (await import('@/lib/ethers/abi')).DROPPIO_ABI,
-          signer
-        );
+        // Dynamic import for config to avoid cycles/ssr issues if any
+        const { DROPPIO_CONTRACT_ADDRESS } = await import('@/lib/ethers/config');
+        const { DROPPIO_ABI } = await import('@/lib/ethers/abi');
 
         // Send tip transaction
-        const tx = await contract.tip(creatorAddress, {
-          value: amountWei,
+        const hash = await writeContractAsync({
+          address: DROPPIO_CONTRACT_ADDRESS as `0x${string}`,
+          abi: DROPPIO_ABI,
+          functionName: 'tip',
+          args: [creatorAddress],
+          value: amountWei
         });
 
-        // Wait for transaction confirmation (at least 1 block)
-        await tx.wait(1);
+        // Wait for transaction confirmation
+        await publicClient.waitForTransactionReceipt({ hash });
 
-        setTxHash(tx.hash);
+        setTxHash(hash);
         setState('success');
 
-        options?.onSuccess?.(tx.hash);
-        return tx.hash;
-      } catch (err) {
+        options?.onSuccess?.(hash);
+        return hash;
+      } catch (err: any) {
         // Log the full error to console for debugging
         console.error('Tip Error:', err);
 
         const tipError = err instanceof Error ? err : new Error('Failed to send tip');
 
         // Handle specific error cases
-        if (tipError.message.includes('user rejected') || tipError.message.includes('User rejected')) {
+        const errorMsg = tipError.message || '';
+        if (errorMsg.includes('User rejected') || errorMsg.includes('User denied')) {
           tipError.message = 'Transaction rejected by user';
-        } else if (tipError.message.includes('insufficient funds') || tipError.message.includes('insufficient balance')) {
+        } else if (errorMsg.includes('insufficient funds') || errorMsg.includes('exceeds balance')) {
           tipError.message = 'Insufficient balance';
-        } else if (tipError.message.includes('network') || tipError.message.includes('chain')) {
-          tipError.message = 'Network error. Please check your connection.';
-        } else if (tipError.message.includes('Internal JSON-RPC error')) {
-          // Provide more helpful message for generic RPC errors
-          tipError.message = 'Wallet error. Please check your balance and network.';
         }
 
         setError(tipError);
@@ -112,7 +106,7 @@ export function useTip(options?: UseTipOptions): UseTipReturn {
         return null;
       }
     },
-    [isConnected, address, walletClient, options]
+    [isConnected, address, writeContractAsync, publicClient, options]
   );
 
   const reset = useCallback(() => {
