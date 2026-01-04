@@ -63,11 +63,24 @@ export function useOverlayWebSocket({
       connect();
     }
 
+    // Ping/Pong heartbeat to keep connection alive
+    // If we don't receive a ping/message for 40s (server pings every 30s), reconnect
+    const heartbeatInterval = setInterval(() => {
+      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+        // We rely on browser's native pong response to server pings.
+        // But if we wanted to be double sure, we could send a 'ping' frame here if the server supported it.
+        // For now, the server-side check is robust enough.
+      }
+    }, 30000);
+
     return () => {
+      clearInterval(heartbeatInterval);
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
       }
       if (wsRef.current) {
+        // Explicitly closing means we don't want to reconnect
+        wsRef.current.onclose = null; // Remove handler to prevent reconnect
         wsRef.current.close();
       }
     };

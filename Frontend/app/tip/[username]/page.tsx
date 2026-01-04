@@ -308,7 +308,7 @@ export default function TipPage() {
                       ) : (
                         <span className="flex items-center gap-2">
                           <span className="w-2 h-2 bg-gray-400 rounded-full"></span>
-                          <span className="text-muted-foreground">Offline</span>
+                          <span className="text-muted-foreground">Offline • Tips go directly to wallet</span>
                         </span>
                       )}
                     </CardDescription>

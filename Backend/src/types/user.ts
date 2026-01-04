@@ -29,6 +29,7 @@ export interface OnboardUserInput {
   role: UserRole;
   displayName?: string;
   avatarUrl?: string;
+  bio?: string;
   platform?: Platform;
   payoutWallet?: string;
 }

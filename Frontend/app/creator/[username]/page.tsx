@@ -34,7 +34,7 @@ export default function CreatorProfilePage() {
         // Creator not found - will show placeholder
       }
     };
-    
+
     if (username) {
       loadCreator();
     }
@@ -92,19 +92,25 @@ export default function CreatorProfilePage() {
                 </div>
               </CardHeader>
               <CardContent>
-                {activeStream ? (
-                  <div className="space-y-4">
+                <div className="space-y-4">
+                  {activeStream ? (
                     <div className="flex items-center gap-2">
                       <span className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></span>
-                      <span className="font-medium">Currently Live</span>
+                      <span className="font-medium text-red-600">Currently Live on {activeStream.platform}</span>
                     </div>
-                    <Link href={`/tip/${username}`}>
-                      <Button>Send a Tip</Button>
-                    </Link>
-                  </div>
-                ) : (
-                  <p className="text-muted-foreground">Currently offline</p>
-                )}
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <span className="w-3 h-3 bg-gray-400 rounded-full"></span>
+                      <span className="text-muted-foreground">Currently offline • Tips go directly to wallet</span>
+                    </div>
+                  )}
+
+                  <Link href={`/tip/${username}`} className="block">
+                    <Button size="lg" className="w-full sm:w-auto">
+                      {activeStream ? 'Send a Tip' : `Support ${creator?.display_name || 'Creator'}`}
+                    </Button>
+                  </Link>
+                </div>
               </CardContent>
             </Card>
           </div>

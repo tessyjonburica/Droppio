@@ -34,6 +34,8 @@ export const wsManager = {
       streamerId,
       lastPing: new Date(),
     };
+    (ws as any).isAlive = true;
+    ws.on('pong', () => { (ws as any).isAlive = true; });
     wsConnections.streamers.set(streamerId, connection);
     logger.debug(`Added streamer connection: ${streamerId}`);
   },
@@ -45,6 +47,8 @@ export const wsManager = {
       streamId,
       lastPing: new Date(),
     };
+    (ws as any).isAlive = true;
+    ws.on('pong', () => { (ws as any).isAlive = true; });
 
     if (!wsConnections.viewers.has(streamId)) {
       wsConnections.viewers.set(streamId, new Set());
@@ -60,6 +64,8 @@ export const wsManager = {
       streamerId,
       lastPing: new Date(),
     };
+    (ws as any).isAlive = true;
+    ws.on('pong', () => { (ws as any).isAlive = true; });
     wsConnections.overlays.set(streamerId, connection);
     logger.debug(`Added overlay connection: ${streamerId}`);
   },
@@ -107,52 +113,33 @@ export const wsManager = {
   // Cleanup and heartbeat management
   startHeartbeatCleanup: (): void => {
     // Heartbeat interval: ping every 30 seconds
+    // Heartbeat interval: ping every 30 seconds
     const pingInterval = setInterval(() => {
-      const now = new Date();
-      // 60 seconds timeout
 
       // Ping streamers
       for (const [streamerId, conn] of wsConnections.streamers.entries()) {
-        if (conn.ws.readyState === WebSocket.OPEN) {
-          try {
-            conn.ws.ping();
-            conn.lastPing = now;
-          } catch {
-            wsManager.removeStreamerConnection(streamerId);
-          }
-        } else {
-          wsManager.removeStreamerConnection(streamerId);
-        }
+        if ((conn.ws as any).isAlive === false) return wsManager.removeStreamerConnection(streamerId);
+
+        (conn.ws as any).isAlive = false;
+        conn.ws.ping();
       }
 
       // Ping viewers
       for (const [streamId, viewers] of wsConnections.viewers.entries()) {
         for (const conn of viewers) {
-          if (conn.ws.readyState === WebSocket.OPEN) {
-            try {
-              conn.ws.ping();
-              conn.lastPing = now;
-            } catch {
-              wsManager.removeViewerConnection(streamId, conn.ws);
-            }
-          } else {
-            wsManager.removeViewerConnection(streamId, conn.ws);
-          }
+          if ((conn.ws as any).isAlive === false) return wsManager.removeViewerConnection(streamId, conn.ws);
+
+          (conn.ws as any).isAlive = false;
+          conn.ws.ping();
         }
       }
 
       // Ping overlays
       for (const [streamerId, conn] of wsConnections.overlays.entries()) {
-        if (conn.ws.readyState === WebSocket.OPEN) {
-          try {
-            conn.ws.ping();
-            conn.lastPing = now;
-          } catch {
-            wsManager.removeOverlayConnection(streamerId);
-          }
-        } else {
-          wsManager.removeOverlayConnection(streamerId);
-        }
+        if ((conn.ws as any).isAlive === false) return wsManager.removeOverlayConnection(streamerId);
+
+        (conn.ws as any).isAlive = false;
+        conn.ws.ping();
       }
     }, 30000);
 

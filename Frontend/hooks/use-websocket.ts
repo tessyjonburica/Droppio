@@ -104,6 +104,8 @@ export function useWebSocket({ channel, id, onMessage, enabled = true }: UseWebS
         clearTimeout(reconnectTimeoutRef.current);
       }
       if (wsRef.current) {
+        // Prevent reconnect on cleanup
+        wsRef.current.onclose = null;
         wsRef.current.close();
       }
     };
