@@ -101,17 +101,16 @@ export const tipService = {
       },
     });
 
-    // Only emit WebSocket event to overlay if stream exists AND is live
-    if (stream && stream.is_live) {
-      overlayWsHelpers.notifyTipEvent(creatorId, {
-        tipId: tip.id,
-        amount: tip.amount_eth,
-        viewer: {
-          displayName: viewer.display_name,
-          walletAddress: viewer.wallet_address,
-        },
-      });
-    }
+    // Always emit WebSocket event to overlay (even if offline)
+    // This allows creators to test alerts without being live
+    overlayWsHelpers.notifyTipEvent(creatorId, {
+      tipId: tip.id,
+      amount: tip.amount_eth,
+      viewer: {
+        displayName: viewer.display_name,
+        walletAddress: viewer.wallet_address,
+      },
+    });
 
     return {
       ...tip,
