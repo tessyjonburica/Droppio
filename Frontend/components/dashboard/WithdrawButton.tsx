@@ -31,8 +31,16 @@ export function WithdrawButton() {
 
                 const contractBalance = await contract.balances(address);
                 setBalance(formatEther(contractBalance));
-            } catch (error) {
-                console.error('Failed to check balance:', error);
+            } catch (error: any) {
+                // If the error is due to No internet or RPC error, log silently
+                if (!window.navigator.onLine) return;
+
+                // Specific check for CALL_EXCEPTION or revert which might happen if contract is not on this network
+                if (error.code === 'CALL_EXCEPTION' || error.message?.includes('missing revert data')) {
+                    console.warn('Contract balance check failed: Contract may not be deployed on this network or address is invalid.');
+                } else {
+                    console.error('Failed to check balance:', error?.message || error);
+                }
             } finally {
                 setIsChecking(false);
             }

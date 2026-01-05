@@ -5,6 +5,7 @@ export interface OnboardUserInput {
   role: 'viewer' | 'creator';
   displayName?: string;
   avatarUrl?: string;
+  bio?: string;
   platform?: 'twitch' | 'youtube' | 'kick' | 'tiktok';
   payoutWallet?: string;
 }

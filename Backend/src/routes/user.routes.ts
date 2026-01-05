@@ -15,6 +15,7 @@ const onboardSchema = z.object({
     role: UserRoleSchema,
     displayName: z.string().min(1).max(100).optional(),
     avatarUrl: z.string().url().optional(),
+    bio: z.string().max(500).optional(),
     platform: PlatformSchema.optional(),
     payoutWallet: z
       .string()

@@ -119,17 +119,24 @@ export default function DashboardPage() {
     if (!user?.id) return;
 
     const pollData = async () => {
-      await Promise.all([
-        loadStats(),
-        (async () => {
-          try {
-            const tips = await creatorService.getTipsByCreator(user.id);
-            setRecentTips(tips);
-          } catch (error) {
-            console.error('Failed to poll tips:', error);
-          }
-        })()
-      ]);
+      try {
+        await Promise.all([
+          loadStats(),
+          (async () => {
+            try {
+              const tips = await creatorService.getTipsByCreator(user.id);
+              setRecentTips(tips);
+            } catch (error: any) {
+              // Suppress periodic polling errors if they are network-related to avoid console noise
+              if (!window.navigator.onLine) return;
+              console.error('Failed to poll tips:', error?.message || error);
+            }
+          })()
+        ]);
+      } catch (error: any) {
+        if (!window.navigator.onLine) return;
+        console.error('Periodic polling error:', error?.message || error);
+      }
     };
 
     const interval = setInterval(pollData, 10000); // Poll every 10 seconds
@@ -356,7 +363,7 @@ export default function DashboardPage() {
                             {viewerAddress ? `${viewerAddress.slice(0, 6)}...${viewerAddress.slice(-4)}` : 'Anonymous'}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            {timestamp ? new Date(timestamp).toLocaleString() : 'Just now'}
+                            {_hasHydrated && timestamp ? new Date(timestamp).toLocaleString() : '---'}
                             {!tip.stream_id && (
                               <span className="ml-2 inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
                                 Offline

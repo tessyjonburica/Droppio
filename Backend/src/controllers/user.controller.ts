@@ -1,13 +1,14 @@
 import { Response } from 'express';
 import { AuthenticatedRequest } from '../middleware/auth.middleware';
 import { userService } from '../services/user.service';
+import { OnboardUserInput } from '../types/user';
 import { logger } from '../utils/logger';
 
 export const userController = {
   onboard: async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
       const walletAddress = req.user!.walletAddress;
-      const input = { walletAddress, ...req.body };
+      const input: OnboardUserInput = { walletAddress, ...req.body };
       const user = await userService.onboard(walletAddress, input);
       res.status(200).json({ user });
     } catch (error) {
