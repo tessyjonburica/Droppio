@@ -17,6 +17,7 @@ const config = createConfig({
     walletConnect({
       projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || '3fcc6b4468c3674bcaf833eec9d1a017',
     }),
+    injected(),
   ],
   transports: {
     [baseSepolia.id]: http(process.env.NEXT_PUBLIC_BASE_RPC_URL || 'https://sepolia.base.org'),
