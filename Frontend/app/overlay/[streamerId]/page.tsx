@@ -22,6 +22,22 @@ export default function OverlayPage() {
   const [currentTips, setCurrentTips] = useState<TipData[]>([]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
+  // Log initialization
+  useEffect(() => {
+    console.log('[Overlay] Initializing overlay page:', {
+      creatorId,
+      hasToken: !!token,
+      enabled: !!creatorId && !!token,
+    });
+    
+    if (!creatorId) {
+      console.error('[Overlay] Missing creatorId in URL');
+    }
+    if (!token) {
+      console.error('[Overlay] Missing token in query string');
+    }
+  }, [creatorId, token]);
+
   useEffect(() => {
     const loadConfig = async () => {
       if (!creatorId) return;
@@ -47,23 +63,34 @@ export default function OverlayPage() {
       if (event.type === 'tip_event') {
         const amount = parseFloat(event.data.amount);
         const threshold = parseFloat(minAmount);
+        console.log(`[Overlay] Tip received: ${amount} ETH, threshold: ${threshold} ETH`);
         if (amount >= threshold) {
           handleTipEvent(event.data);
+        } else {
+          console.log(`[Overlay] Tip filtered out (${amount} < ${threshold})`);
         }
+      } else {
+        console.log('[Overlay] Unknown event type:', event.type);
       }
     },
   });
 
   const handleTipEvent = (tipData: TipData) => {
+    console.log('[Overlay] Tip event received:', tipData);
+    
     // Play sound if enabled
     if (soundEnabled && audioRef.current) {
       audioRef.current.play().catch((error) => {
-        console.error('Failed to play sound:', error);
+        console.error('[Overlay] Failed to play sound:', error);
       });
     }
 
     // Add tip to queue
-    setCurrentTips((prev) => [...prev, tipData]);
+    setCurrentTips((prev) => {
+      const updated = [...prev, tipData];
+      console.log('[Overlay] Current tips queue:', updated.length);
+      return updated;
+    });
 
     // Auto-remove after animation completes (5.5 seconds)
     setTimeout(() => {

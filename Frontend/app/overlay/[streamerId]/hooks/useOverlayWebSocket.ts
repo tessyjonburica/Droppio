@@ -15,14 +15,24 @@ export function useOverlayWebSocket({
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const connect = useCallback(() => {
-    if (!enabled || !creatorId || !token) return;
+    if (!enabled || !creatorId || !token) {
+      console.warn('[Overlay WS] Connection disabled or missing params:', { enabled, creatorId: !!creatorId, token: !!token });
+      return;
+    }
 
-    const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3001';
+    // Derive WebSocket URL from API URL (WebSocket runs on same port as HTTP server)
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+    const wsUrl = process.env.NEXT_PUBLIC_WS_URL || apiUrl.replace(/^http/, 'ws');
+    
     // Append token to query string for auth
     const url = `${wsUrl}/ws/overlay/${creatorId}?token=${encodeURIComponent(token)}`;
+    
+    console.log('[Overlay WS] Connecting to:', url.replace(token, 'TOKEN_HIDDEN'));
+    
     const ws = new WebSocket(url);
 
     ws.onopen = () => {
+      console.log('[Overlay WS] Connected successfully');
       setIsConnected(true);
       setReconnectAttempts(0);
     };
@@ -30,17 +40,19 @@ export function useOverlayWebSocket({
     ws.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
+        console.log('[Overlay WS] Message received:', data.type, data);
         onMessage?.(data as OverlayChannelEvent);
       } catch (error) {
-        console.error('WebSocket message parse error:', error);
+        console.error('[Overlay WS] Message parse error:', error, 'Raw data:', event.data);
       }
     };
 
     ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
+      console.error('[Overlay WS] WebSocket error:', error);
     };
 
-    ws.onclose = () => {
+    ws.onclose = (event) => {
+      console.warn('[Overlay WS] Connection closed:', event.code, event.reason || 'No reason provided');
       setIsConnected(false);
       wsRef.current = null;
 
@@ -48,10 +60,13 @@ export function useOverlayWebSocket({
       const currentAttempts = reconnectAttempts;
       if (enabled && currentAttempts < 5) {
         const delay = Math.min(1000 * Math.pow(2, currentAttempts), 30000);
+        console.log(`[Overlay WS] Reconnecting in ${delay}ms (attempt ${currentAttempts + 1}/5)`);
         reconnectTimeoutRef.current = setTimeout(() => {
           setReconnectAttempts((prev) => prev + 1);
           connect();
         }, delay);
+      } else if (currentAttempts >= 5) {
+        console.error('[Overlay WS] Max reconnection attempts reached');
       }
     };
 

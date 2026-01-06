@@ -14,8 +14,14 @@ export function OverlayContainer({ children, isConnected }: OverlayContainerProp
 
       {/* Connection Status (development only) */}
       {process.env.NODE_ENV === 'development' && (
-        <div className="absolute top-4 right-4 bg-black/50 text-white px-3 py-1 rounded text-xs">
-          {isConnected ? 'Connected' : 'Disconnected'}
+        <div 
+          className={`absolute top-4 right-4 px-3 py-1 rounded text-xs font-mono ${
+            isConnected 
+              ? 'bg-green-500/80 text-white' 
+              : 'bg-red-500/80 text-white'
+          }`}
+        >
+          {isConnected ? '✓ Overlay Connected' : '✗ Overlay Disconnected'}
         </div>
       )}
     </div>
