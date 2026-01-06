@@ -11,8 +11,21 @@ export interface TipData {
 }
 
 export interface OverlayChannelEvent {
-  type: 'tip_event';
-  data: TipData;
+  type: 'tip_event' | 'TIP_SENT';
+  data?: TipData;
+  // TIP_SENT event structure (from blockchain listener)
+  tipId?: string;
+  creatorId?: string;
+  tipperAddress?: string;
+  amountEth?: string;
+  amount?: string;
+  txHash?: string;
+  tipMode?: 'live' | 'offline';
+  timestamp?: string;
+  viewer?: {
+    displayName: string | null;
+    walletAddress: string;
+  };
 }
 
 export interface UseOverlayWebSocketOptions {

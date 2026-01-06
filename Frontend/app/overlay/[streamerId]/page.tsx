@@ -60,17 +60,46 @@ export default function OverlayPage() {
     token: token || '',
     enabled: !!creatorId && !!token,
     onMessage: (event) => {
-      if (event.type === 'tip_event') {
-        const amount = parseFloat(event.data.amount);
-        const threshold = parseFloat(minAmount);
-        console.log(`[Overlay] Tip received: ${amount} ETH, threshold: ${threshold} ETH`);
-        if (amount >= threshold) {
-          handleTipEvent(event.data);
-        } else {
-          console.log(`[Overlay] Tip filtered out (${amount} < ${threshold})`);
-        }
+      let tipData: TipData | null = null;
+      let amount: number;
+
+      // Handle tip_event (from tip.service.ts)
+      if (event.type === 'tip_event' && event.data) {
+        tipData = event.data;
+        amount = parseFloat(tipData.amount);
+      }
+      // Handle TIP_SENT (from blockchain listener)
+      else if (event.type === 'TIP_SENT') {
+        // Transform TIP_SENT event to TipData format
+        const amountValue = event.amountEth || event.amount || '0';
+        amount = parseFloat(amountValue);
+        
+        tipData = {
+          tipId: event.tipId || event.txHash || `tip-${Date.now()}`,
+          amount: amountValue,
+          viewer: event.viewer || {
+            displayName: null,
+            walletAddress: event.tipperAddress || '',
+          },
+          timestamp: event.timestamp || new Date().toISOString(),
+        };
       } else {
         console.log('[Overlay] Unknown event type:', event.type);
+        return;
+      }
+
+      if (!tipData) {
+        console.error('[Overlay] Failed to extract tip data from event');
+        return;
+      }
+
+      const threshold = parseFloat(minAmount);
+      console.log(`[Overlay] Tip received: ${amount} ETH, threshold: ${threshold} ETH`);
+      
+      if (amount >= threshold) {
+        handleTipEvent(tipData);
+      } else {
+        console.log(`[Overlay] Tip filtered out (${amount} < ${threshold})`);
       }
     },
   });
