@@ -107,11 +107,22 @@ export default function OverlayPage() {
   const handleTipEvent = (tipData: TipData) => {
     console.log('[Overlay] Tip event received:', tipData);
     
-    // Play sound if enabled
+    // Play sound if enabled (gracefully handle missing file)
     if (soundEnabled && audioRef.current) {
-      audioRef.current.play().catch((error) => {
-        console.error('[Overlay] Failed to play sound:', error);
-      });
+      // Check if audio is ready to play
+      if (audioRef.current.readyState >= 2) { // HAVE_CURRENT_DATA or higher
+        audioRef.current.play().catch((error) => {
+          // Silently fail - audio file might not exist or be blocked
+          console.warn('[Overlay] Could not play sound (this is OK if sound file is missing):', error.message);
+        });
+      } else {
+        // Audio not loaded yet, wait for it
+        audioRef.current.addEventListener('canplay', () => {
+          audioRef.current?.play().catch(() => {
+            // Silently fail
+          });
+        }, { once: true });
+      }
     }
 
     // Add tip to queue
@@ -129,13 +140,17 @@ export default function OverlayPage() {
 
   return (
     <OverlayContainer isConnected={isConnected}>
-      {/* Sound element */}
+      {/* Sound element - only render if sound is enabled */}
       {soundEnabled && (
         <audio
           ref={audioRef}
           src="/sounds/tip-sound.mp3"
           preload="auto"
           style={{ display: 'none' }}
+          onError={(e) => {
+            // Silently handle missing audio file - it's optional
+            console.warn('[Overlay] Audio file not found (this is OK):', e);
+          }}
         />
       )}
 

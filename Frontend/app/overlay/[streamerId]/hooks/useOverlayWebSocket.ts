@@ -10,15 +10,38 @@ export function useOverlayWebSocket({
   enabled = true,
 }: UseOverlayWebSocketOptions) {
   const [isConnected, setIsConnected] = useState(false);
-  const [reconnectAttempts, setReconnectAttempts] = useState(0);
+  const reconnectAttemptsRef = useRef(0);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const onMessageRef = useRef(onMessage);
+  const isConnectingRef = useRef(false);
+
+  // Keep onMessage ref updated
+  useEffect(() => {
+    onMessageRef.current = onMessage;
+  }, [onMessage]);
 
   const connect = useCallback(() => {
+    // Prevent multiple simultaneous connections
+    if (isConnectingRef.current || (wsRef.current && wsRef.current.readyState === WebSocket.CONNECTING)) {
+      console.warn('[Overlay WS] Connection already in progress, skipping...');
+      return;
+    }
+
+    // Close existing connection if any
+    if (wsRef.current) {
+      if (wsRef.current.readyState === WebSocket.OPEN || wsRef.current.readyState === WebSocket.CONNECTING) {
+        wsRef.current.close();
+      }
+      wsRef.current = null;
+    }
+
     if (!enabled || !creatorId || !token) {
       console.warn('[Overlay WS] Connection disabled or missing params:', { enabled, creatorId: !!creatorId, token: !!token });
       return;
     }
+
+    isConnectingRef.current = true;
 
     // Derive WebSocket URL from API URL (WebSocket runs on same port as HTTP server)
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
@@ -34,14 +57,15 @@ export function useOverlayWebSocket({
     ws.onopen = () => {
       console.log('[Overlay WS] Connected successfully');
       setIsConnected(true);
-      setReconnectAttempts(0);
+      reconnectAttemptsRef.current = 0;
+      isConnectingRef.current = false;
     };
 
     ws.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
         console.log('[Overlay WS] Message received:', data.type, data);
-        onMessage?.(data as OverlayChannelEvent);
+        onMessageRef.current?.(data as OverlayChannelEvent);
       } catch (error) {
         console.error('[Overlay WS] Message parse error:', error, 'Raw data:', event.data);
       }
@@ -49,29 +73,33 @@ export function useOverlayWebSocket({
 
     ws.onerror = (error) => {
       console.error('[Overlay WS] WebSocket error:', error);
+      isConnectingRef.current = false;
     };
 
     ws.onclose = (event) => {
       console.warn('[Overlay WS] Connection closed:', event.code, event.reason || 'No reason provided');
       setIsConnected(false);
       wsRef.current = null;
+      isConnectingRef.current = false;
 
-      // Reconnect with exponential backoff
-      const currentAttempts = reconnectAttempts;
-      if (enabled && currentAttempts < 5) {
-        const delay = Math.min(1000 * Math.pow(2, currentAttempts), 30000);
-        console.log(`[Overlay WS] Reconnecting in ${delay}ms (attempt ${currentAttempts + 1}/5)`);
-        reconnectTimeoutRef.current = setTimeout(() => {
-          setReconnectAttempts((prev) => prev + 1);
-          connect();
-        }, delay);
-      } else if (currentAttempts >= 5) {
-        console.error('[Overlay WS] Max reconnection attempts reached');
+      // Reconnect with exponential backoff (only if not manually closed)
+      if (enabled && event.code !== 1000) {
+        const currentAttempts = reconnectAttemptsRef.current;
+        if (currentAttempts < 5) {
+          const delay = Math.min(1000 * Math.pow(2, currentAttempts), 30000);
+          console.log(`[Overlay WS] Reconnecting in ${delay}ms (attempt ${currentAttempts + 1}/5)`);
+          reconnectTimeoutRef.current = setTimeout(() => {
+            reconnectAttemptsRef.current = currentAttempts + 1;
+            connect();
+          }, delay);
+        } else {
+          console.error('[Overlay WS] Max reconnection attempts reached');
+        }
       }
     };
 
     wsRef.current = ws;
-  }, [creatorId, token, enabled, onMessage, reconnectAttempts]);
+  }, [creatorId, token, enabled]);
 
   useEffect(() => {
     if (enabled) {
