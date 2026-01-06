@@ -9,7 +9,19 @@ interface OverlayContainerProps {
 
 export function OverlayContainer({ children, isConnected }: OverlayContainerProps) {
   return (
-    <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden bg-transparent">
+    <div 
+      className="fixed inset-0 pointer-events-none z-[9999] overflow-visible"
+      style={{ 
+        backgroundColor: 'transparent',
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        width: '100vw',
+        height: '100vh',
+      }}
+    >
       {children}
 
       {/* Connection Status (development only) */}

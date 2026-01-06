@@ -56,14 +56,23 @@ export function TipAnimation({ tip, theme, onComplete }: TipAnimationProps) {
       exit={variants.exit}
       transition={variants.transition}
       className="relative"
-      style={{ pointerEvents: 'none' }}
+      style={{ 
+        pointerEvents: 'none',
+        zIndex: 10000,
+        position: 'relative',
+        visibility: 'visible',
+        opacity: 1,
+      }}
     >
       <div
         className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl p-6 border-2"
         style={{
-          backgroundColor: themeConfig.backgroundColor,
-          borderColor: themeConfig.borderColor,
-          color: themeConfig.textColor,
+          backgroundColor: themeConfig.backgroundColor || 'rgba(255, 255, 255, 0.95)',
+          borderColor: themeConfig.borderColor || '#0F9E99',
+          color: themeConfig.textColor || '#000000',
+          minWidth: '300px',
+          visibility: 'visible',
+          opacity: 1,
         }}
       >
         <div className="flex items-center gap-4">

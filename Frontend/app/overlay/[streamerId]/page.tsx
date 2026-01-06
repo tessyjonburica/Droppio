@@ -74,8 +74,13 @@ export default function OverlayPage() {
         const amountValue = event.amountEth || event.amount || '0';
         amount = parseFloat(amountValue);
         
+        // Use txHash as tipId for uniqueness, fallback to timestamp with random
+        const uniqueId = event.txHash 
+          ? `${event.txHash}-${Date.now()}` 
+          : `tip-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        
         tipData = {
-          tipId: event.tipId || event.txHash || `tip-${Date.now()}`,
+          tipId: event.tipId || uniqueId,
           amount: amountValue,
           viewer: event.viewer || {
             displayName: null,
@@ -154,21 +159,58 @@ export default function OverlayPage() {
         />
       )}
 
+      {/* Debug info in development */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="absolute top-20 right-4 bg-black/70 text-white px-3 py-2 rounded text-xs font-mono z-50">
+          <div>Tips in queue: {currentTips.length}</div>
+          <div>Connected: {isConnected ? 'Yes' : 'No'}</div>
+          {currentTips.length > 0 && (
+            <div className="mt-2">
+              Latest: {currentTips[currentTips.length - 1].amount} ETH
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Alert Container */}
       <AlertContainer>
-        <AnimatePresence>
-          {currentTips.map((tip) => (
-            <TipAnimation
-              key={tip.tipId}
-              tip={tip}
-              theme={themeName}
-              onComplete={() => {
-                setCurrentTips((prev) => prev.filter((t) => t.tipId !== tip.tipId));
-              }}
-            />
-          ))}
+        <AnimatePresence mode="popLayout" initial={false}>
+          {currentTips.map((tip) => {
+            console.log('[Overlay] Rendering tip animation:', tip.tipId, tip.amount);
+            return (
+              <TipAnimation
+                key={tip.tipId}
+                tip={tip}
+                theme={themeName}
+                onComplete={() => {
+                  console.log('[Overlay] Tip animation completed:', tip.tipId);
+                  setCurrentTips((prev) => prev.filter((t) => t.tipId !== tip.tipId));
+                }}
+              />
+            );
+          })}
         </AnimatePresence>
       </AlertContainer>
+
+      {/* Test element to verify overlay is visible - always show in dev */}
+      {process.env.NODE_ENV === 'development' && (
+        <div 
+          className="fixed bottom-10 left-10 bg-blue-500 text-white px-4 py-2 rounded z-[10001] font-bold"
+          style={{ zIndex: 10001, pointerEvents: 'auto' }}
+        >
+          OVERLAY ACTIVE - Tips: {currentTips.length} | Connected: {isConnected ? 'YES' : 'NO'}
+        </div>
+      )}
+
+      {/* Simple test tip animation (always visible in dev when tips exist) */}
+      {process.env.NODE_ENV === 'development' && currentTips.length > 0 && (
+        <div 
+          className="fixed top-10 left-10 bg-green-500 text-white px-4 py-2 rounded z-[10002]"
+          style={{ zIndex: 10002 }}
+        >
+          ✓ Tip received: {currentTips[currentTips.length - 1].amount} ETH
+        </div>
+      )}
     </OverlayContainer>
   );
 }
