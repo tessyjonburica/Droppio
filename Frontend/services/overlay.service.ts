@@ -38,8 +38,12 @@ export const overlayService = {
 
   async updateConfig(streamerId: string, data: UpdateOverlayInput): Promise<Overlay> {
     try {
-      const response = await api.patch<{ overlay: Overlay }>(`/overlay/${streamerId}/config`, data);
-      return response.data.overlay || response.data as Overlay;
+      const response = await api.patch<{ overlay: Overlay } | Overlay>(`/overlay/${streamerId}/config`, data);
+      // Handle both response formats: { overlay: ... } or direct Overlay
+      if ('overlay' in response.data) {
+        return response.data.overlay;
+      }
+      return response.data as Overlay;
     } catch (error: any) {
       // Provide better error messages
       if (error.response?.status === 403) {
