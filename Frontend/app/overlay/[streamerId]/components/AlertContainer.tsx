@@ -9,14 +9,19 @@ interface AlertContainerProps {
 export function AlertContainer({ children }: AlertContainerProps) {
   return (
     <div 
-      className="absolute bottom-20 right-10 max-w-md space-y-4 z-[10000]"
+      className="absolute top-20 left-1/2 -translate-x-1/2 max-w-md space-y-4 z-[10000]"
       style={{
         position: 'absolute',
-        bottom: '80px',
-        right: '40px',
+        top: '80px',
+        left: '50%',
+        transform: 'translateX(-50%)',
         maxWidth: '28rem',
+        width: '100%',
         zIndex: 10000,
         pointerEvents: 'none',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
       }}
     >
       {children}

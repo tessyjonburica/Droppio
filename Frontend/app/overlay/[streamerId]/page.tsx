@@ -172,9 +172,9 @@ export default function OverlayPage() {
         </div>
       )}
 
-      {/* Alert Container */}
+      {/* Alert Container - Top Center */}
       <AlertContainer>
-        <AnimatePresence mode="popLayout" initial={false}>
+        <AnimatePresence mode="sync" initial={false}>
           {currentTips.map((tip) => {
             console.log('[Overlay] Rendering tip animation:', tip.tipId, tip.amount);
             return (

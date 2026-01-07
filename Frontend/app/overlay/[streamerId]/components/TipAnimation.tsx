@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { TipData, OverlayTheme } from '../types';
 import { themes } from '../styles/themes';
@@ -36,18 +37,23 @@ export function TipAnimation({ tip, theme, onComplete }: TipAnimationProps) {
       case 'slide':
       default:
         return {
-          initial: { opacity: 0, x: 300 },
-          animate: { opacity: 1, x: 0 },
-          exit: { opacity: 0, x: -300 },
-          transition: { type: 'spring', stiffness: 200, damping: 20 },
+          initial: { opacity: 0, y: -100, scale: 0.9 },
+          animate: { opacity: 1, y: 0, scale: 1 },
+          exit: { opacity: 0, y: -50, scale: 0.9 },
+          transition: { type: 'spring', stiffness: 300, damping: 25 },
         };
     }
   };
 
   const variants = getAnimationVariants();
 
-  // Auto-dismiss after 5 seconds
-  setTimeout(onComplete, 5000);
+  // Auto-dismiss after 5 seconds (use useEffect to avoid multiple timeouts)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      onComplete();
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [onComplete]);
 
   return (
     <motion.div
@@ -70,9 +76,11 @@ export function TipAnimation({ tip, theme, onComplete }: TipAnimationProps) {
           backgroundColor: themeConfig.backgroundColor || 'rgba(255, 255, 255, 0.95)',
           borderColor: themeConfig.borderColor || '#0F9E99',
           color: themeConfig.textColor || '#000000',
-          minWidth: '300px',
+          minWidth: '320px',
+          maxWidth: '400px',
           visibility: 'visible',
           opacity: 1,
+          margin: '0 auto',
         }}
       >
         <div className="flex items-center gap-4">

@@ -46,7 +46,12 @@ export const requireRole = (allowedRoles: ('viewer' | 'creator')[]) => {
     }
 
     if (!allowedRoles.includes(req.user.role)) {
-      res.status(403).json({ error: 'Insufficient permissions' });
+      res.status(403).json({ 
+        error: 'Insufficient permissions',
+        details: `Required role: ${allowedRoles.join(' or ')}, but your role is: ${req.user.role}`,
+        yourRole: req.user.role,
+        requiredRoles: allowedRoles
+      });
       return;
     }
 

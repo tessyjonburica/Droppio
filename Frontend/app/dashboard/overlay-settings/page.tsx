@@ -48,11 +48,22 @@ export default function OverlaySettingsPage() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user?.id) return;
+    if (!user?.id) {
+      toast({
+        title: 'Error',
+        description: 'User ID not found. Please try logging in again.',
+        variant: 'destructive',
+      });
+      return;
+    }
 
     setIsLoading(true);
 
     try {
+      console.log('[Overlay Settings] Saving config for user ID:', user.id);
+      console.log('[Overlay Settings] User role:', user.role);
+      console.log('[Overlay Settings] Data being sent:', { theme, alertSettings });
+      
       await overlayService.updateConfig(user.id, {
         theme,
         alertSettings,
@@ -64,9 +75,13 @@ export default function OverlaySettingsPage() {
       });
       router.push('/dashboard');
     } catch (error: any) {
+      console.error('[Overlay Settings] Save error:', error);
+      const errorMessage = error.response?.data?.error || error.message || 'Failed to update overlay settings';
+      const errorDetails = error.response?.data?.details || '';
+      
       toast({
         title: 'Failed to save',
-        description: error.message || 'Failed to update overlay settings',
+        description: `${errorMessage}${errorDetails ? `: ${errorDetails}` : ''}`,
         variant: 'destructive',
       });
     } finally {

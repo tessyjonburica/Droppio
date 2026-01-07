@@ -31,13 +31,24 @@ export interface UpdateOverlayInput {
 
 export const overlayService = {
   async getConfig(streamerId: string): Promise<Overlay> {
-    const response = await api.get<Overlay>(`/overlay/${streamerId}/config`);
-    return response.data;
+    const response = await api.get<{ overlay: Overlay } | Overlay>(`/overlay/${streamerId}/config`);
+    // Handle both response formats: { overlay: ... } or direct Overlay
+    return 'overlay' in response.data ? response.data.overlay : response.data as Overlay;
   },
 
   async updateConfig(streamerId: string, data: UpdateOverlayInput): Promise<Overlay> {
-    const response = await api.patch<Overlay>(`/overlay/${streamerId}/config`, data);
-    return response.data;
+    try {
+      const response = await api.patch<{ overlay: Overlay }>(`/overlay/${streamerId}/config`, data);
+      return response.data.overlay || response.data as Overlay;
+    } catch (error: any) {
+      // Provide better error messages
+      if (error.response?.status === 403) {
+        const errorMsg = error.response?.data?.error || 'Permission denied';
+        const details = error.response?.data?.details || '';
+        throw new Error(`${errorMsg}${details ? `: ${details}` : ''}`);
+      }
+      throw error;
+    }
   },
 };
 
