@@ -42,13 +42,15 @@ export default function OverlayPage() {
     const loadConfig = async () => {
       if (!creatorId) return;
       try {
+        // Try to load config, but don't fail if it errors (overlay should still work)
         const config = await overlayService.getConfig(creatorId);
         const fetchedTheme = (config.theme as any)?.name || (typeof config.theme === 'string' ? config.theme : 'default');
         setThemeName(fetchedTheme as OverlayTheme);
         setSoundEnabled(config.alert_settings?.soundEnabled ?? true);
         setMinAmount(config.alert_settings?.minAmount || '0');
       } catch (error) {
-        console.error('Failed to load overlay config:', error);
+        // Silently fail - overlay will use defaults
+        console.warn('[Overlay] Failed to load config (using defaults):', error);
       }
     };
     loadConfig();

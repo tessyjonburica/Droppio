@@ -72,7 +72,10 @@ class ApiClient {
             return this.client(originalRequest);
           } catch (refreshError) {
             useAuthStore.getState().clearAuth();
-            window.location.href = '/creator-login';
+            // Don't redirect if we're on the overlay page (it doesn't need page-level auth)
+            if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/overlay/')) {
+              window.location.href = '/creator-login';
+            }
             return Promise.reject(refreshError);
           }
         }

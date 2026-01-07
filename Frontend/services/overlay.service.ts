@@ -31,9 +31,16 @@ export interface UpdateOverlayInput {
 
 export const overlayService = {
   async getConfig(streamerId: string): Promise<Overlay> {
-    const response = await api.get<{ overlay: Overlay } | Overlay>(`/overlay/${streamerId}/config`);
-    // Handle both response formats: { overlay: ... } or direct Overlay
-    return 'overlay' in response.data ? response.data.overlay : response.data as Overlay;
+    try {
+      const response = await api.get<{ overlay: Overlay } | Overlay>(`/overlay/${streamerId}/config`);
+      // Handle both response formats: { overlay: ... } or direct Overlay
+      return 'overlay' in response.data ? response.data.overlay : response.data as Overlay;
+    } catch (error: any) {
+      // If config load fails (e.g., expired token), return defaults instead of throwing
+      // The overlay should still work without config
+      console.warn('[Overlay Service] Failed to load config, using defaults:', error.message);
+      throw error; // Re-throw so caller can handle gracefully
+    }
   },
 
   async updateConfig(streamerId: string, data: UpdateOverlayInput): Promise<Overlay> {
