@@ -52,7 +52,7 @@ export const handleOverlayConnection = (ws: WebSocket, req: OverlayWebSocketRequ
         } catch (createError) {
           logger.error(`Error creating overlay for creator ${creatorId}:`, createError);
           ws.close(1008, 'Failed to create overlay');
-          return;
+        return;
         }
       }
 
@@ -110,8 +110,8 @@ export const overlayWsHelpers = {
       const message = JSON.stringify({ ...event, timestamp: new Date().toISOString() });
       conn.ws.send(message);
       logger.debug(`Sent ${event.type} to overlay for streamer ${streamerId}`);
-    } catch (error) {
-      logger.error(`Failed to send to overlay ${streamerId}:`, error);
+      } catch (error) {
+        logger.error(`Failed to send to overlay ${streamerId}:`, error);
     }
   },
 

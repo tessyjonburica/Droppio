@@ -101,7 +101,7 @@ export default function CreatorProfilePage() {
                   ) : (
                     <div className="flex items-center gap-2">
                       <span className="w-3 h-3 bg-gray-400 rounded-full"></span>
-                      <span className="text-muted-foreground">Currently offline • Tips go directly to wallet</span>
+                      <span className="text-muted-foreground">Currently offline</span>
                     </div>
                   )}
 

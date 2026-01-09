@@ -77,6 +77,27 @@ export const tipModel = {
     return (data || []) as Tip[];
   },
 
+  findWithViewersByCreatorId: async (creatorId: string): Promise<TipResponse[]> => {
+    const { data, error } = await supabase
+      .from('tips')
+      .select(`
+        *,
+        viewer:users!tips_viewer_id_fkey (
+          id,
+          wallet_address,
+          display_name
+        )
+      `)
+      .eq('creator_id', creatorId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      throw new Error(`Failed to find tips with viewers: ${error.message}`);
+    }
+
+    return (data || []) as TipResponse[];
+  },
+
   updateTxHash: async (tipId: string, txHash: string): Promise<Tip | null> => {
     const { data, error } = await supabase
       .from('tips')

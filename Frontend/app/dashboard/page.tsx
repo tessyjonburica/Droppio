@@ -20,7 +20,8 @@ import {
   WifiOff,
   Share2,
   Clock,
-  Zap
+  Zap,
+  User
 } from 'lucide-react';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
@@ -349,14 +350,18 @@ export default function DashboardPage() {
                 {recentTips.map((tip) => {
                   const tipId = tip.tipId || tip.id || Math.random().toString();
                   const viewerAddress = tip.viewer?.walletAddress || tip.viewer?.wallet_address || '';
-                  const amount = tip.amount || tip.amount_eth;
+                  const rawAmount = tip.amount || tip.amount_eth;
+                  // Format amount to avoid scientific notation
+                  const amount = Number(rawAmount).toLocaleString('en-US', { maximumFractionDigits: 18 });
+
+                  // Use timestamp
                   const timestamp = tip.timestamp || tip.created_at;
 
                   return (
                     <div key={tipId} className="flex items-center justify-between p-4 border rounded-xl hover:bg-muted/50 transition-colors">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
-                          {viewerAddress ? viewerAddress.slice(2, 3).toUpperCase() : 'V'}
+                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                          <User className="h-5 w-5" />
                         </div>
                         <div>
                           <p className="font-semibold">
@@ -377,12 +382,13 @@ export default function DashboardPage() {
                       </div>
                     </div>
                   );
-                })}
+                })
+                }
               </div>
             )}
           </CardContent>
         </Card>
       </div>
-    </div>
+    </div >
   );
 }
