@@ -1,5 +1,5 @@
 import { supabase } from '../config/db';
-import { Tip, SendTipInput } from '../types/tip';
+import { Tip, SendTipInput, TipResponse } from '../types/tip';
 
 export const tipModel = {
   create: async (input: SendTipInput, viewerId: string, creatorId: string): Promise<Tip | null> => {
