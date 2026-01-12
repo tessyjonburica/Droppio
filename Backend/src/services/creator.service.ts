@@ -95,26 +95,94 @@ export const creatorService = {
   },
 
   getTipsByCreator: async (creatorId: string): Promise<any[]> => {
-    // Get all tips for this creator
-    const tips = await tipModel.findByCreatorId(creatorId);
+    // Validate creatorId
+    if (!creatorId || typeof creatorId !== 'string') {
+      throw new Error('Invalid creator ID');
+    }
 
-    // Enrich each tip with viewer information
-    const tipsWithViewers = await Promise.all(
-      tips.map(async tip => {
-        const viewer = await userModel.findById(tip.viewer_id);
-        return {
+    try {
+      // Try to use the efficient JOIN query first
+      try {
+        const tipsWithViewers = await tipModel.findWithViewersByCreatorId(creatorId);
+        // TipResponse already has the viewer property in the correct format
+        return tipsWithViewers.map(tip => ({
           ...tip,
-          viewer: viewer
-            ? {
-              id: viewer.id,
-              wallet_address: viewer.wallet_address,
-              display_name: viewer.display_name,
-            }
-            : null,
-        };
-      })
-    );
+          viewer: tip.viewer || null, // Ensure viewer is null if undefined
+        }));
+      } catch (joinError) {
+        // If JOIN query fails (e.g., foreign key issues), fall back to manual method
+        console.warn(`JOIN query failed, falling back to manual method:`, joinError);
+        
+        // Get all tips for this creator
+        const tips = await tipModel.findByCreatorId(creatorId);
 
-    return tipsWithViewers;
+        // If no tips, return empty array
+        if (!tips || tips.length === 0) {
+          return [];
+        }
+
+        // Enrich each tip with viewer information
+        // Handle null viewer_id and missing viewers gracefully
+        // Use Promise.allSettled to ensure one failure doesn't break all tips
+        const tipsWithViewers = await Promise.allSettled(
+          tips.map(async tip => {
+            // Skip viewer lookup if viewer_id is null or undefined
+            if (!tip.viewer_id) {
+              return {
+                ...tip,
+                viewer: null,
+              };
+            }
+
+            try {
+              const viewer = await userModel.findById(tip.viewer_id);
+              return {
+                ...tip,
+                viewer: viewer
+                  ? {
+                      id: viewer.id,
+                      wallet_address: viewer.wallet_address,
+                      display_name: viewer.display_name,
+                    }
+                  : null,
+              };
+            } catch (viewerError) {
+              // Log error but don't fail the entire request
+              // Return tip without viewer info if lookup fails
+              const errorMsg = viewerError instanceof Error ? viewerError.message : 'Unknown error';
+              console.error(`Failed to fetch viewer ${tip.viewer_id} for tip ${tip.id}:`, errorMsg);
+              return {
+                ...tip,
+                viewer: null,
+              };
+            }
+          })
+        );
+
+        // Extract successful results, handle rejected promises gracefully
+        return tipsWithViewers
+          .map((result, index) => {
+            if (result.status === 'fulfilled') {
+              return result.value;
+            } else {
+              // If a tip failed to process, return it without viewer info
+              const errorMsg = result.reason instanceof Error ? result.reason.message : 'Unknown error';
+              console.error(`Failed to process tip at index ${index}:`, errorMsg);
+              const tip = tips[index];
+              return {
+                ...tip,
+                viewer: null,
+              };
+            }
+          })
+          .filter(Boolean); // Remove any null/undefined entries
+      }
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+      const errorStack = error instanceof Error ? error.stack : undefined;
+      console.error(`Failed to get tips for creator ${creatorId}:`, errorMsg, errorStack);
+      // Re-throw with more context
+      throw new Error(`Failed to fetch tips: ${errorMsg}`);
+    }
   },
 };

@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { AuthenticatedRequest } from '../middleware/auth.middleware';
 import { creatorService } from '../services/creator.service';
 import { logger } from '../utils/logger';
+import { env } from '../config/env';
 
 export const creatorController = {
   getByUsername: async (req: AuthenticatedRequest, res: Response): Promise<void> => {
@@ -60,12 +61,28 @@ export const creatorController = {
   getTipsByCreator: async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
       const { creatorId } = req.params;
+      
+      if (!creatorId) {
+        res.status(400).json({ error: 'Creator ID is required' });
+        return;
+      }
+
+      logger.debug(`Fetching tips for creator: ${creatorId}`);
       const tips = await creatorService.getTipsByCreator(creatorId);
+      logger.debug(`Successfully fetched ${tips.length} tips for creator: ${creatorId}`);
       res.status(200).json({ tips });
     } catch (error) {
-      logger.error('Get tips by creator error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Internal server error';
-      res.status(500).json({ error: errorMessage });
+      const errorStack = error instanceof Error ? error.stack : undefined;
+      logger.error(`Get tips by creator error for creatorId ${req.params.creatorId}:`, {
+        message: errorMessage,
+        stack: errorStack,
+        error,
+      });
+      res.status(500).json({ 
+        error: 'Failed to fetch tips',
+        message: env.NODE_ENV === 'development' ? errorMessage : undefined,
+      });
     }
   },
 };

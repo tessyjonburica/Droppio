@@ -3,6 +3,7 @@ import { logger } from '../utils/logger';
 import { OverlayChannelEvent, TipEvent } from '../types/websocket';
 import { wsManager } from './manager';
 import { overlayModel } from '../models/overlay.model';
+import { verifyAccessToken, JwtPayload } from '../utils/jwt';
 
 interface OverlayWebSocketRequest {
   url?: string;
@@ -18,6 +19,7 @@ export const handleOverlayConnection = (ws: WebSocket, req: OverlayWebSocketRequ
     overlayIndex >= 0 && pathParts[overlayIndex + 1] ? pathParts[overlayIndex + 1] : null;
 
   if (!creatorId) {
+    logger.warn('Overlay connection rejected: Invalid creator ID', { url: req.url });
     ws.close(1008, 'Invalid creator ID');
     return;
   }
@@ -28,7 +30,21 @@ export const handleOverlayConnection = (ws: WebSocket, req: OverlayWebSocketRequ
     (req.headers?.authorization && req.headers.authorization.split(' ')[1]);
 
   if (!accessToken) {
+    logger.warn(`Overlay connection rejected: No access token provided. CreatorId: ${creatorId}`);
     ws.close(1008, 'No access token provided');
+    return;
+  }
+
+  // Validate JWT token (overlay is public-facing, so we just verify token is valid)
+  // We don't check if the token's user matches the creatorId - anyone with a valid token can view overlays
+  let payload: JwtPayload | null = null;
+  try {
+    payload = verifyAccessToken(accessToken);
+    logger.debug(`Overlay token validated for creator ${creatorId}, wallet: ${payload.walletAddress}`);
+  } catch (tokenError) {
+    const errorMessage = tokenError instanceof Error ? tokenError.message : 'Unknown token error';
+    logger.warn(`Overlay connection rejected: Invalid token. CreatorId: ${creatorId}, Error: ${errorMessage}`);
+    ws.close(1008, 'Invalid token');
     return;
   }
 
@@ -52,13 +68,13 @@ export const handleOverlayConnection = (ws: WebSocket, req: OverlayWebSocketRequ
         } catch (createError) {
           logger.error(`Error creating overlay for creator ${creatorId}:`, createError);
           ws.close(1008, 'Failed to create overlay');
-        return;
+          return;
         }
       }
 
       // Add WebSocket to overlay connections map
       wsManager.addOverlayConnection(creatorId, ws);
-      logger.info(`Overlay WebSocket connected: creator:${creatorId}`);
+      logger.info(`Overlay WebSocket connected: creator:${creatorId}, wallet:${payload?.walletAddress || 'unknown'}`);
 
       // Handle incoming messages
       ws.on('message', (data: Buffer) => {
@@ -87,7 +103,7 @@ export const handleOverlayConnection = (ws: WebSocket, req: OverlayWebSocketRequ
       });
     })
     .catch(error => {
-      logger.error('Overlay connection error:', error);
+      logger.error(`Overlay connection error for creator ${creatorId}:`, error);
       ws.close(1008, 'Connection error');
     });
 };
