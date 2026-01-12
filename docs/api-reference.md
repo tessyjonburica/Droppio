@@ -36,9 +36,7 @@ Completes the initial profile setup.
     "payoutWallet": "string",
     "avatarUrl": "string"
   }
-  ```
-
----
+  ``
 
 ## 🎥 Streams
 
@@ -82,3 +80,5 @@ Fetches the visual configuration for the OBS overlay.
 
 ### PATCH `/overlay/:streamerId/config` (Protected)
 Updates overlay colors, sounds, and animations.
+
+We will need alert sounds
