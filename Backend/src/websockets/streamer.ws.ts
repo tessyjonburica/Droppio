@@ -117,12 +117,22 @@ export const handleStreamerConnection = (ws: WebSocket, req: StreamerWebSocketRe
 export const streamerWsHelpers = {
   sendToStreamer: (streamerId: string, event: StreamerChannelEvent): void => {
     const conn = wsManager.getStreamerConnection(streamerId);
-    if (conn && conn.ws.readyState === WebSocket.OPEN) {
-      try {
-        conn.ws.send(JSON.stringify({ ...event, timestamp: new Date().toISOString() }));
-      } catch (error) {
-        logger.error(`Failed to send to streamer ${streamerId}:`, error);
-      }
+    if (!conn) {
+      logger.warn(`No streamer WebSocket connection found for ${streamerId}`);
+      return;
+    }
+    
+    if (conn.ws.readyState !== WebSocket.OPEN) {
+      logger.warn(`Streamer WebSocket connection for ${streamerId} is not open (state: ${conn.ws.readyState})`);
+      return;
+    }
+    
+    try {
+      const message = JSON.stringify({ ...event, timestamp: new Date().toISOString() });
+      conn.ws.send(message);
+      logger.debug(`Sent ${event.type} to streamer ${streamerId}`);
+    } catch (error) {
+      logger.error(`Failed to send to streamer ${streamerId}:`, error);
     }
   },
 

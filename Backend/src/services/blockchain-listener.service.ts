@@ -8,6 +8,8 @@ import { userModel } from '../models/user.model';
 import { tipModel } from '../models/tip.model';
 import { streamModel } from '../models/stream.model';
 import { wsManager } from '../websockets/manager';
+import { streamerWsHelpers } from '../websockets/streamer.ws';
+import { overlayWsHelpers } from '../websockets/overlay.ws';
 
 // Droppio contract ABI (only TipSent event)
 const DROPPIO_ABI = [
@@ -149,18 +151,40 @@ class BlockchainListener {
 
       // Persist tip to database
       // Note: Schema uses creator_id, but we need to map it correctly
-      const tip = await tipModel.createFromBlockchain({
-        creatorId: creator.id,
-        viewerId: viewer.id,
-        streamId,
-        amountEth,
-        txHash: event.txHash,
-        tipMode: streamId ? 'live' : 'offline',
-      });
+      let tip;
+      try {
+        tip = await tipModel.createFromBlockchain({
+          creatorId: creator.id,
+          viewerId: viewer.id,
+          streamId,
+          amountEth,
+          txHash: event.txHash,
+          tipMode: streamId ? 'live' : 'offline',
+        });
 
-      if (!tip) {
-        logger.error(`Failed to persist tip: ${event.txHash}`);
-        return;
+        if (!tip) {
+          logger.error(`Failed to persist tip: ${event.txHash} - createFromBlockchain returned null`);
+          return;
+        }
+      } catch (dbError: any) {
+        // Check if error is due to duplicate tx_hash (unique constraint violation)
+        if (dbError?.message?.includes('duplicate') || dbError?.code === '23505' || dbError?.code === 'PGRST116') {
+          logger.info(`Tip with txHash ${event.txHash} already exists (duplicate detected), fetching existing tip`);
+          // Try to find existing tip by txHash
+          const existingTips = await tipModel.findByCreatorId(creator.id);
+          const existingTip = existingTips.find(t => t.tx_hash === event.txHash);
+          
+          if (existingTip) {
+            tip = existingTip;
+            logger.info(`Found existing tip ${existingTip.id} for txHash ${event.txHash}`);
+          } else {
+            logger.warn(`Duplicate tip detected but could not find existing tip for txHash ${event.txHash}`);
+            return;
+          }
+        } else {
+          logger.error(`Failed to persist tip: ${event.txHash}`, dbError);
+          return;
+        }
       }
 
       logger.info(`Tip persisted: ${tip.id}`, {
@@ -169,7 +193,37 @@ class BlockchainListener {
         amountEth,
       });
 
-      // Emit WebSocket event to creator channel
+      // Emit tip_received event to streamer dashboard (for dashboard updates)
+      logger.info(`Sending tip_received event to streamer ${creator.id}`, {
+        tipId: tip.id,
+        amount: amountEth,
+        viewerId: viewer.id,
+      });
+      streamerWsHelpers.notifyTipReceived(creator.id, {
+        tipId: tip.id,
+        amount: amountEth,
+        viewer: {
+          id: viewer.id,
+          walletAddress: viewer.wallet_address,
+          displayName: viewer.display_name,
+        },
+      });
+
+      // Emit tip_event to overlay (for OBS overlay)
+      logger.info(`Sending tip_event to overlay ${creator.id}`, {
+        tipId: tip.id,
+        amount: amountEth,
+      });
+      overlayWsHelpers.notifyTipEvent(creator.id, {
+        tipId: tip.id,
+        amount: amountEth,
+        viewer: {
+          displayName: viewer.display_name,
+          walletAddress: viewer.wallet_address,
+        },
+      });
+
+      // Also emit TIP_SENT event for backward compatibility (if any clients still use it)
       this.emitTipSentEvent(creator.id, {
         creatorId: creator.id,
         tipperAddress: event.from,
