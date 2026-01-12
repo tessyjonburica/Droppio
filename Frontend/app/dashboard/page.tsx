@@ -70,10 +70,14 @@ export default function DashboardPage() {
   const loadStats = useCallback(async () => {
     if (!user?.id) return;
     try {
+      console.log(`[Dashboard] Loading stats for creator: ${user.id}`);
       const data = await creatorService.getTotalTips(user.id);
+      console.log('[Dashboard] Stats loaded:', data);
       setStats(data);
-    } catch (error) {
-      console.error('Failed to load stats:', error);
+    } catch (error: any) {
+      console.error('[Dashboard] Failed to load stats:', error?.message || error);
+      // Keep existing stats on error to avoid UI flicker
+      // Stats will be updated on next successful poll
     }
   }, [user?.id]);
 
@@ -100,10 +104,20 @@ export default function DashboardPage() {
       if (!user?.id) return;
       setIsLoadingTips(true);
       try {
+        console.log(`[Dashboard] Loading tips for creator: ${user.id}`);
         const tips = await creatorService.getTipsByCreator(user.id);
-        setRecentTips(tips);
-      } catch (error) {
-        console.error('Failed to load tips:', error);
+        console.log(`[Dashboard] Loaded ${tips?.length || 0} tips`);
+        setRecentTips(tips || []);
+      } catch (error: any) {
+        console.error('[Dashboard] Failed to load tips:', error?.message || error);
+        // Set empty array on error to show "no tips" state instead of stuck loading
+        setRecentTips([]);
+        // Show toast notification for user feedback
+        toast({
+          title: 'Failed to load tips',
+          description: error?.message || 'Please refresh the page',
+          variant: 'destructive',
+        });
       } finally {
         setIsLoadingTips(false);
       }
@@ -112,37 +126,86 @@ export default function DashboardPage() {
     if (user?.id) {
       loadAllTips();
     }
-  }, [user?.id]);
+  }, [user?.id, toast]);
 
   // Polling for stats and tips (fallback if WebSocket fails)
-
   useEffect(() => {
     if (!user?.id) return;
 
+    let pollCount = 0;
+    let consecutiveErrors = 0;
+    const MAX_CONSECUTIVE_ERRORS = 3;
+
     const pollData = async () => {
+      // Skip if offline
+      if (!window.navigator.onLine) {
+        console.warn('[Dashboard] Polling skipped: offline');
+        return;
+      }
+
+      pollCount++;
+      console.log(`[Dashboard] Polling data (attempt ${pollCount})...`);
+
       try {
-        await Promise.all([
-          loadStats(),
+        // Poll stats and tips in parallel
+        const [statsResult, tipsResult] = await Promise.allSettled([
+          (async () => {
+            try {
+              const data = await creatorService.getTotalTips(user.id);
+              setStats(data);
+              console.log('[Dashboard] Stats updated:', data);
+              return data;
+            } catch (error: any) {
+              console.error('[Dashboard] Failed to poll stats:', error?.message || error);
+              throw error;
+            }
+          })(),
           (async () => {
             try {
               const tips = await creatorService.getTipsByCreator(user.id);
               setRecentTips(tips);
+              console.log(`[Dashboard] Tips updated: ${tips.length} tips`);
+              return tips;
             } catch (error: any) {
-              // Suppress periodic polling errors if they are network-related to avoid console noise
-              if (!window.navigator.onLine) return;
-              console.error('Failed to poll tips:', error?.message || error);
+              console.error('[Dashboard] Failed to poll tips:', error?.message || error);
+              // Don't throw - we want to keep showing existing tips even if polling fails
+              return null;
             }
           })()
         ]);
+
+        // Check if both failed
+        if (statsResult.status === 'rejected' && tipsResult.status === 'rejected') {
+          consecutiveErrors++;
+          if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
+            console.error(`[Dashboard] Polling failed ${consecutiveErrors} times consecutively. Stopping polling.`);
+            // Don't clear interval, but log the issue
+          }
+        } else {
+          // Reset error counter on success
+          consecutiveErrors = 0;
+        }
       } catch (error: any) {
-        if (!window.navigator.onLine) return;
-        console.error('Periodic polling error:', error?.message || error);
+        consecutiveErrors++;
+        console.error('[Dashboard] Polling error:', error?.message || error);
+        
+        if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
+          console.error(`[Dashboard] Too many consecutive errors (${consecutiveErrors}). Consider checking API status.`);
+        }
       }
     };
 
-    const interval = setInterval(pollData, 10000); // Poll every 10 seconds
-    return () => clearInterval(interval);
-  }, [user?.id, loadStats]);
+    // Initial poll
+    pollData();
+
+    // Set up interval polling every 10 seconds
+    const interval = setInterval(pollData, 10000);
+    
+    return () => {
+      clearInterval(interval);
+      console.log('[Dashboard] Polling stopped');
+    };
+  }, [user?.id]); // Removed loadStats from dependencies to avoid unnecessary re-renders
 
   const handleWebSocketMessage = useCallback((event: StreamerChannelEvent | ViewerChannelEvent | OverlayChannelEvent) => {
     if (event.type === 'tip_received') {
