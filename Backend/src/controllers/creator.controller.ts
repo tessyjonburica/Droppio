@@ -1,6 +1,8 @@
 import { Response } from 'express';
 import { AuthenticatedRequest } from '../middleware/auth.middleware';
 import { creatorService } from '../services/creator.service';
+import { blockchainListener } from '../services/blockchain-listener.service';
+import { userModel } from '../models/user.model';
 import { logger } from '../utils/logger';
 import { env } from '../config/env';
 
@@ -81,6 +83,42 @@ export const creatorController = {
       });
       res.status(500).json({ 
         error: 'Failed to fetch tips',
+        message: env.NODE_ENV === 'development' ? errorMessage : undefined,
+      });
+    }
+  },
+
+  syncTipsFromBlockchain: async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    try {
+      const { creatorId } = req.params;
+      
+      if (!creatorId) {
+        res.status(400).json({ error: 'Creator ID is required' });
+        return;
+      }
+
+      // Get creator's wallet address
+      const creator = await userModel.findById(creatorId);
+      if (!creator) {
+        res.status(404).json({ error: 'Creator not found' });
+        return;
+      }
+
+      logger.info(`Manual sync requested for creator ${creatorId} (wallet: ${creator.wallet_address})`);
+
+      // Sync tips from blockchain (last 1000 blocks)
+      const result = await blockchainListener.syncTips(creator.wallet_address);
+
+      res.status(200).json({
+        message: 'Sync completed',
+        synced: result.synced,
+        errors: result.errors,
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Internal server error';
+      logger.error(`Sync tips error for creatorId ${req.params.creatorId}:`, error);
+      res.status(500).json({ 
+        error: 'Failed to sync tips',
         message: env.NODE_ENV === 'development' ? errorMessage : undefined,
       });
     }

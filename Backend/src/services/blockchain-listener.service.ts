@@ -72,6 +72,46 @@ class BlockchainListener {
   }
 
   /**
+   * Process historical TipSent events (catch up on missed tips)
+   */
+  private async processHistoricalEvents(fromBlock: number, toBlock: number): Promise<void> {
+    if (!this.contract || !this.provider) {
+      logger.warn('Cannot process historical events: contract or provider not initialized');
+      return;
+    }
+
+    try {
+      logger.info(`Processing historical TipSent events from block ${fromBlock} to ${toBlock}`);
+      
+      // Query past events
+      const filter = this.contract.filters.TipSent();
+      const events = await this.contract.queryFilter(filter, fromBlock, toBlock);
+      
+      logger.info(`Found ${events.length} historical TipSent events to process`);
+      
+      // Process each event
+      for (const event of events) {
+        // Type guard: EventLog has args, Log doesn't
+        if (!('args' in event) || !event.args) continue;
+        
+        const [from, to, amount, sessionId] = event.args;
+        await this.handleTipSentEvent({
+          from: from.toLowerCase(),
+          to: to.toLowerCase(),
+          amount,
+          sessionId,
+          txHash: event.transactionHash,
+          blockNumber: event.blockNumber,
+        });
+      }
+      
+      logger.info(`Finished processing ${events.length} historical events`);
+    } catch (error) {
+      logger.error('Error processing historical events:', error);
+    }
+  }
+
+  /**
    * Start listening to TipSent events
    */
   async start(): Promise<void> {
@@ -87,10 +127,20 @@ class BlockchainListener {
         throw new Error('Provider or contract not initialized');
       }
 
-      // Listen to TipSent events
+      // Process historical events from the last 1000 blocks (catch up on missed tips)
+      try {
+        const currentBlock = await this.provider.getBlockNumber();
+        const fromBlock = Math.max(0, currentBlock - 1000); // Last 1000 blocks
+        await this.processHistoricalEvents(fromBlock, currentBlock);
+      } catch (historicalError) {
+        logger.warn('Failed to process historical events (continuing anyway):', historicalError);
+      }
+
+      // Listen to NEW TipSent events going forward
       this.contract.on(
         'TipSent',
         async (from: string, to: string, amount: bigint, sessionId: string, event: ethers.Log) => {
+          logger.info(`NEW TipSent event detected: ${event.transactionHash}`);
           await this.handleTipSentEvent({
             from: from.toLowerCase(),
             to: to.toLowerCase(),
@@ -122,12 +172,15 @@ class BlockchainListener {
         amount: event.amount.toString(),
       });
 
-      // Find creator by wallet address
+      // Find creator by wallet address (case-insensitive)
       const creator = await userModel.findByWalletAddress(event.to);
       if (!creator) {
-        logger.warn(`Creator not found for wallet: ${event.to}`);
+        logger.warn(`Creator not found for wallet: ${event.to}. Tip will be skipped.`);
+        logger.warn(`Available creators in database may not match this wallet address.`);
         return;
       }
+      
+      logger.info(`Found creator: ${creator.id} (${creator.display_name || creator.wallet_address}) for wallet ${event.to}`);
 
       // Find viewer by wallet address (create if doesn't exist)
       let viewer = await userModel.findByWalletAddress(event.from);
@@ -168,60 +221,83 @@ class BlockchainListener {
         }
       } catch (dbError: any) {
         // Check if error is due to duplicate tx_hash (unique constraint violation)
-        if (dbError?.message?.includes('duplicate') || dbError?.code === '23505' || dbError?.code === 'PGRST116') {
+        const isDuplicateError = 
+          dbError?.message?.includes('duplicate') || 
+          dbError?.message?.includes('unique') ||
+          dbError?.code === '23505' || 
+          dbError?.code === 'PGRST116';
+          
+        if (isDuplicateError) {
           logger.info(`Tip with txHash ${event.txHash} already exists (duplicate detected), fetching existing tip`);
           // Try to find existing tip by txHash
           const existingTips = await tipModel.findByCreatorId(creator.id);
-          const existingTip = existingTips.find(t => t.tx_hash === event.txHash);
+          const existingTip = existingTips.find(t => t.tx_hash?.toLowerCase() === event.txHash.toLowerCase());
           
           if (existingTip) {
             tip = existingTip;
-            logger.info(`Found existing tip ${existingTip.id} for txHash ${event.txHash}`);
+            logger.info(`Found existing tip ${existingTip.id} for txHash ${event.txHash} - will still send WebSocket event`);
+            // Continue to send WebSocket event even for duplicates
           } else {
             logger.warn(`Duplicate tip detected but could not find existing tip for txHash ${event.txHash}`);
+            // Still try to send WebSocket event in case it's a new connection
+            tip = null; // Set to null so we skip WebSocket events
             return;
           }
         } else {
-          logger.error(`Failed to persist tip: ${event.txHash}`, dbError);
+          logger.error(`Failed to persist tip: ${event.txHash}`, {
+            error: dbError?.message || dbError,
+            code: dbError?.code,
+            stack: dbError?.stack,
+          });
           return;
         }
       }
 
-      logger.info(`Tip persisted: ${tip.id}`, {
-        creatorId: creator.id,
-        viewerId: viewer.id,
-        amountEth,
-      });
+      if (tip) {
+        logger.info(`Tip persisted: ${tip.id}`, {
+          creatorId: creator.id,
+          viewerId: viewer.id,
+          amountEth,
+          txHash: event.txHash,
+        });
+      } else {
+        logger.warn(`Tip processing completed but tip is null for txHash: ${event.txHash}`);
+      }
 
-      // Emit tip_received event to streamer dashboard (for dashboard updates)
-      logger.info(`Sending tip_received event to streamer ${creator.id}`, {
-        tipId: tip.id,
-        amount: amountEth,
-        viewerId: viewer.id,
-      });
-      streamerWsHelpers.notifyTipReceived(creator.id, {
-        tipId: tip.id,
-        amount: amountEth,
-        viewer: {
-          id: viewer.id,
-          walletAddress: viewer.wallet_address,
-          displayName: viewer.display_name,
-        },
-      });
+      // Always emit WebSocket events if tip exists (even if it was a duplicate)
+      if (tip) {
+        // Emit tip_received event to streamer dashboard (for dashboard updates)
+        logger.info(`Sending tip_received event to streamer ${creator.id}`, {
+          tipId: tip.id,
+          amount: amountEth,
+          viewerId: viewer.id,
+          txHash: event.txHash,
+        });
+        streamerWsHelpers.notifyTipReceived(creator.id, {
+          tipId: tip.id,
+          amount: amountEth,
+          viewer: {
+            id: viewer.id,
+            walletAddress: viewer.wallet_address,
+            displayName: viewer.display_name,
+          },
+        });
 
-      // Emit tip_event to overlay (for OBS overlay)
-      logger.info(`Sending tip_event to overlay ${creator.id}`, {
-        tipId: tip.id,
-        amount: amountEth,
-      });
-      overlayWsHelpers.notifyTipEvent(creator.id, {
-        tipId: tip.id,
-        amount: amountEth,
-        viewer: {
-          displayName: viewer.display_name,
-          walletAddress: viewer.wallet_address,
-        },
-      });
+        // Emit tip_event to overlay (for OBS overlay)
+        logger.info(`Sending tip_event to overlay ${creator.id}`, {
+          tipId: tip.id,
+          amount: amountEth,
+          txHash: event.txHash,
+        });
+        overlayWsHelpers.notifyTipEvent(creator.id, {
+          tipId: tip.id,
+          amount: amountEth,
+          viewer: {
+            displayName: viewer.display_name,
+            walletAddress: viewer.wallet_address,
+          },
+        });
+      }
 
       // Also emit TIP_SENT event for backward compatibility (if any clients still use it)
       this.emitTipSentEvent(creator.id, {
@@ -306,6 +382,60 @@ class BlockchainListener {
         logger.error('Reconnection failed:', error);
       });
     }, delay);
+  }
+
+  /**
+   * Manually sync tips from blockchain (for a specific creator or all)
+   */
+  async syncTips(creatorWalletAddress?: string, fromBlock?: number, toBlock?: number): Promise<{ synced: number; errors: number }> {
+    if (!this.contract || !this.provider) {
+      await this.initializeProvider();
+    }
+
+    if (!this.contract || !this.provider) {
+      throw new Error('Provider or contract not initialized');
+    }
+
+    const currentBlock = await this.provider.getBlockNumber();
+    const startBlock = fromBlock || Math.max(0, currentBlock - 1000);
+    const endBlock = toBlock || currentBlock;
+
+    logger.info(`Manual sync: Processing TipSent events from block ${startBlock} to ${endBlock}${creatorWalletAddress ? ` for creator ${creatorWalletAddress}` : ''}`);
+
+    const filter = creatorWalletAddress 
+      ? this.contract.filters.TipSent(null, creatorWalletAddress.toLowerCase())
+      : this.contract.filters.TipSent();
+    
+    const events = await this.contract.queryFilter(filter, startBlock, endBlock);
+    
+    logger.info(`Found ${events.length} TipSent events to sync`);
+
+    let synced = 0;
+    let errors = 0;
+
+    for (const event of events) {
+      // Type guard: EventLog has args, Log doesn't
+      if (!('args' in event) || !event.args) continue;
+      
+      try {
+        const [from, to, amount, sessionId] = event.args;
+        await this.handleTipSentEvent({
+          from: from.toLowerCase(),
+          to: to.toLowerCase(),
+          amount,
+          sessionId,
+          txHash: event.transactionHash,
+          blockNumber: event.blockNumber,
+        });
+        synced++;
+      } catch (error) {
+        logger.error(`Error syncing tip ${event.transactionHash}:`, error);
+        errors++;
+      }
+    }
+
+    logger.info(`Sync complete: ${synced} synced, ${errors} errors`);
+    return { synced, errors };
   }
 
   /**

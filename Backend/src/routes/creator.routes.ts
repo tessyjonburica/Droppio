@@ -23,4 +23,8 @@ router.get('/:creatorId/total-tips', creatorController.getTotalTips);
 // Public endpoint - no authentication required
 router.get('/:creatorId/tips', creatorController.getTipsByCreator);
 
+// POST /creators/:creatorId/sync-tips
+// Manual sync endpoint to sync tips from blockchain
+router.post('/:creatorId/sync-tips', creatorController.syncTipsFromBlockchain);
+
 export default router;
