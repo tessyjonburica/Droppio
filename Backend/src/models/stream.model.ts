@@ -1,9 +1,9 @@
-import { supabase } from '../config/db';
+import { supabaseAdmin } from '../config/db';
 import { Stream, StartStreamInput } from '../types/stream';
 
 export const streamModel = {
   create: async (streamerId: string, input: StartStreamInput): Promise<Stream | null> => {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('streams')
       .insert({
         creator_id: streamerId,
@@ -22,7 +22,7 @@ export const streamModel = {
   },
 
   findById: async (id: string): Promise<Stream | null> => {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('streams')
       .select('*, streamer_id:creator_id')
       .eq('id', id)
@@ -39,7 +39,7 @@ export const streamModel = {
   },
 
   findByStreamerId: async (streamerId: string): Promise<Stream | null> => {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('streams')
       .select('*, streamer_id:creator_id')
       .eq('creator_id', streamerId)
@@ -58,7 +58,7 @@ export const streamModel = {
   },
 
   findActiveByStreamerId: async (streamerId: string): Promise<Stream | null> => {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('streams')
       .select('*, streamer_id:creator_id')
       .eq('creator_id', streamerId)
@@ -80,7 +80,7 @@ export const streamModel = {
   findActiveByCreatorId: async (creatorId: string): Promise<Stream | null> => {
     // Schema uses creator_id, but model interface uses streamer_id
     // Map creator_id to streamer_id for compatibility
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('streams')
       .select('*, streamer_id:creator_id')
       .eq('creator_id', creatorId)
@@ -100,7 +100,7 @@ export const streamModel = {
   },
 
   endStream: async (streamId: string): Promise<Stream | null> => {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('streams')
       .update({
         is_live: false,
@@ -126,7 +126,7 @@ export const streamModel = {
       updateData.ended_at = new Date().toISOString();
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('streams')
       .update(updateData)
       .eq('id', streamId)

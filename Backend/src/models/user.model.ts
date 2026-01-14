@@ -1,4 +1,4 @@
-import { supabase, supabaseAdmin } from '../config/db';
+import { supabaseAdmin } from '../config/db';
 import { User, CreateUserInput, OnboardUserInput, UpdateStreamerProfileInput } from '../types/user';
 
 export const userModel = {
@@ -144,7 +144,7 @@ export const userModel = {
       updateData.payout_wallet = input.payoutWallet ? input.payoutWallet.toLowerCase() : null;
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('users')
       .update(updateData)
       .eq('wallet_address', walletAddress.toLowerCase())

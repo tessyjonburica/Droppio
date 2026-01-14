@@ -35,8 +35,6 @@ export const handleOverlayConnection = (ws: WebSocket, req: OverlayWebSocketRequ
     return;
   }
 
-  // Validate JWT token (overlay is public-facing, so we just verify token is valid)
-  // We don't check if the token's user matches the creatorId - anyone with a valid token can view overlays
   let payload: JwtPayload | null = null;
   try {
     payload = verifyAccessToken(accessToken);
@@ -48,9 +46,7 @@ export const handleOverlayConnection = (ws: WebSocket, req: OverlayWebSocketRequ
     return;
   }
 
-  // Validate token against overlays table
-  // For MVP: verify overlay exists for creatorId (auto-create if missing)
-  // In production: verify access_token matches overlay.access_token
+ 
   overlayModel
     .findByCreatorId(creatorId)
     .then(async overlay => {

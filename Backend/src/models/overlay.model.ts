@@ -1,9 +1,9 @@
-import { supabase } from '../config/db';
+import { supabaseAdmin } from '../config/db';
 import { Overlay, UpdateOverlayInput } from '../types/overlay';
 
 export const overlayModel = {
   findByCreatorId: async (creatorId: string): Promise<Overlay | null> => {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('overlays')
       .select('*')
       .eq('creator_id', creatorId)
@@ -31,7 +31,7 @@ export const overlayModel = {
       },
     };
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('overlays')
       .insert(defaultOverlay)
       .select()
@@ -55,7 +55,7 @@ export const overlayModel = {
       updateData.alert_settings = input.alertSettings;
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('overlays')
       .update(updateData)
       .eq('creator_id', creatorId)

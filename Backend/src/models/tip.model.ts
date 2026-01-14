@@ -1,9 +1,9 @@
-import { supabase } from '../config/db';
+import { supabaseAdmin } from '../config/db';
 import { Tip, SendTipInput, TipResponse } from '../types/tip';
 
 export const tipModel = {
   create: async (input: SendTipInput, viewerId: string, creatorId: string): Promise<Tip | null> => {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('tips')
       .insert({
         creator_id: creatorId,
@@ -23,7 +23,7 @@ export const tipModel = {
   },
 
   findById: async (id: string): Promise<Tip | null> => {
-    const { data, error } = await supabase.from('tips').select('*').eq('id', id).single();
+    const { data, error } = await supabaseAdmin.from('tips').select('*').eq('id', id).single();
 
     if (error) {
       if (error.code === 'PGRST116') {
@@ -36,7 +36,7 @@ export const tipModel = {
   },
 
   findByStreamId: async (streamId: string): Promise<Tip[]> => {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('tips')
       .select('*')
       .eq('stream_id', streamId)
@@ -50,7 +50,7 @@ export const tipModel = {
   },
 
   findByViewerId: async (viewerId: string): Promise<Tip[]> => {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('tips')
       .select('*')
       .eq('viewer_id', viewerId)
@@ -64,7 +64,7 @@ export const tipModel = {
   },
 
   findByCreatorId: async (creatorId: string): Promise<Tip[]> => {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('tips')
       .select('*')
       .eq('creator_id', creatorId)
@@ -78,7 +78,7 @@ export const tipModel = {
   },
 
   findWithViewersByCreatorId: async (creatorId: string): Promise<TipResponse[]> => {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('tips')
       .select(`
         *,
@@ -99,7 +99,7 @@ export const tipModel = {
   },
 
   updateTxHash: async (tipId: string, txHash: string): Promise<Tip | null> => {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('tips')
       .update({
         tx_hash: txHash,
@@ -123,7 +123,7 @@ export const tipModel = {
     txHash: string;
     tipMode: 'live' | 'offline';
   }): Promise<Tip | null> => {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('tips')
       .insert({
         creator_id: input.creatorId,
