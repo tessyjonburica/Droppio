@@ -54,6 +54,7 @@ export function useWebSocket({ channel, id, onMessage, enabled = true }: UseWebS
     ws.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
+        console.log('[useWebSocket] Received message:', data);
         onMessage?.(data);
       } catch (error) {
         console.error('WebSocket message parse error:', error);

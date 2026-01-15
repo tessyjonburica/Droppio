@@ -87,10 +87,13 @@ export const tipService = {
     // Create tip record in DB
     const tip = await tipModel.create(input, viewer.id, creatorId);
     if (!tip) {
+      logger.error(`Failed to create tip record for creator ${creatorId}`);
       throw new Error('Failed to create tip');
     }
+    logger.info(`Tip created in DB: ${tip.id} for creator ${creatorId}`);
 
     // Always emit WebSocket event to streamer dashboard (regardless of live status)
+    logger.info(`Broadcasting tip_received to streamer ${creatorId}`);
     streamerWsHelpers.notifyTipReceived(creatorId, {
       tipId: tip.id,
       amount: tip.amount_eth,

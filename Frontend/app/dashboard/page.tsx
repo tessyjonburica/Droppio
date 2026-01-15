@@ -163,8 +163,8 @@ export default function DashboardPage() {
           (async () => {
             try {
               const tips = await creatorService.getTipsByCreator(user.id);
+              console.log(`[Dashboard] Poll: Tips updated with ${tips?.length || 0} items`);
               setRecentTips(tips);
-              console.log(`[Dashboard] Tips updated: ${tips.length} tips`);
               return tips;
             } catch (error: any) {
               console.error('[Dashboard] Failed to poll tips:', error?.message || error);
@@ -188,7 +188,7 @@ export default function DashboardPage() {
       } catch (error: any) {
         consecutiveErrors++;
         console.error('[Dashboard] Polling error:', error?.message || error);
-        
+
         if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
           console.error(`[Dashboard] Too many consecutive errors (${consecutiveErrors}). Consider checking API status.`);
         }
@@ -200,7 +200,7 @@ export default function DashboardPage() {
 
     // Set up interval polling every 10 seconds
     const interval = setInterval(pollData, 10000);
-    
+
     return () => {
       clearInterval(interval);
       console.log('[Dashboard] Polling stopped');
@@ -208,9 +208,16 @@ export default function DashboardPage() {
   }, [user?.id]); // Removed loadStats from dependencies to avoid unnecessary re-renders
 
   const handleWebSocketMessage = useCallback((event: StreamerChannelEvent | ViewerChannelEvent | OverlayChannelEvent) => {
+    console.log('[Dashboard] Received WebSocket event:', event.type, event);
     if (event.type === 'tip_received') {
-      setRecentTips((prev) => [event.data, ...prev].slice(0, 10));
+      console.log('[Dashboard] Updating recent tips with new tip:', event.data.tipId);
+      setRecentTips((prev) => {
+        const newTips = [event.data, ...prev].slice(0, 10);
+        console.log('[Dashboard] New tips state length:', newTips.length);
+        return newTips;
+      });
       // Reload stats to get updated totals from backend
+      console.log('[Dashboard] Triggering stats reload after WebSocket tip...');
       loadStats();
       toast({
         title: 'New tip received!',
