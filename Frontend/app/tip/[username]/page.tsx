@@ -194,10 +194,20 @@ export default function TipPage() {
       return;
     }
 
+    console.log('🚀 [TipPage] handleTip called');
+    console.log('   - Amount:', amount);
+    console.log('   - Creator:', creator.display_name, creator.id);
+    console.log('   - Stream:', activeStream?.id || 'OFFLINE');
+
     try {
       // 1. Send Real On-Chain ETH Transaction
+      console.log('🔗 [TipPage] Initiating on-chain transaction...');
       const hash = await sendOnChainTip(creator.wallet_address, amount);
-      if (!hash) return; // Hook already handles error state
+      if (!hash) {
+        console.warn('❌ [TipPage] On-chain transaction failed or was cancelled');
+        return;
+      }
+      console.log('✅ [TipPage] On-chain transaction successful, Hash:', hash);
 
       // 2. Notify Backend with Tx Hash
       const tipData: any = {
@@ -211,7 +221,9 @@ export default function TipPage() {
         tipData.creatorId = creator.id;
       }
 
+      console.log('📡 [TipPage] Notifying backend with data:', tipData);
       const newTip = await tipService.sendTip(tipData);
+      console.log('🎉 [TipPage] Backend confirmed tip:', newTip.id);
 
       // 3. Update UI and show success modal
       setRecentTips((prev) => [newTip, ...prev].slice(0, 10));
@@ -219,7 +231,7 @@ export default function TipPage() {
       setShowSuccessModal(true);
       setAmount('');
     } catch (error: any) {
-      console.error('Tip execution error:', error);
+      console.error('💥 [TipPage] Tip execution error:', error);
       toast({
         title: 'Tip failed',
         description: error.message || 'Failed to send tip. Please try again.',

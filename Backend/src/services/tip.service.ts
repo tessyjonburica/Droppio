@@ -61,8 +61,9 @@ export const tipService = {
     // Verify transaction hash with ethers provider
     // In development mode or if explicitly skipped, we allow bypassing this
     let isValidTx = false;
+    logger.info(`🔍 [TipService] Verifying transaction: ${input.txHash} for ${input.amountEth} ETH`);
     if (env.SKIP_BLOCKCHAIN_VERIFICATION || (process.env.NODE_ENV === 'development' && input.txHash.startsWith('0x0000'))) {
-      logger.info('Bypassing blockchain verification');
+      logger.info('   - Bypassing blockchain verification (Development Mode)');
       isValidTx = true;
     } else {
       // verifyETHTransaction takes (txHash, expectedAmount, fromAddress)
@@ -70,30 +71,35 @@ export const tipService = {
     }
 
     if (!isValidTx) {
+      logger.error(`❌ [TipService] Transaction verification failed for hash: ${input.txHash}`);
       throw new Error('Transaction verification failed');
     }
+    logger.info('✅ [TipService] Transaction verified');
 
     // Get creator to validate they exist
     const creator = await userModel.findById(creatorId);
     if (!creator) {
+      logger.error(`❌ [TipService] Creator not found: ${creatorId}`);
       throw new Error('Creator not found');
     }
 
     // Prevention: Creators cannot tip themselves
     if (walletAddress.toLowerCase() === creator.wallet_address.toLowerCase()) {
+      logger.warn(`⚠️ [TipService] Self-tipping attempted by wallet: ${walletAddress}`);
       throw new Error('You cannot tip yourself');
     }
 
     // Create tip record in DB
+    logger.info(`💾 [TipService] Creating tip record in DB for creator: ${creatorId}`);
     const tip = await tipModel.create(input, viewer.id, creatorId);
     if (!tip) {
-      logger.error(`Failed to create tip record for creator ${creatorId}`);
+      logger.error(`❌ [TipService] Failed to create tip record for creator ${creatorId}`);
       throw new Error('Failed to create tip');
     }
-    logger.info(`Tip created in DB: ${tip.id} for creator ${creatorId}`);
+    logger.info(`🎉 [TipService] Tip created successfully: ${tip.id}`);
 
     // Always emit WebSocket event to streamer dashboard (regardless of live status)
-    logger.info(`Broadcasting tip_received to streamer ${creatorId}`);
+    logger.info(`📡 [TipService] Broadcasting 'tip_received' to Streamer WS Helpers for ${creatorId}`);
     streamerWsHelpers.notifyTipReceived(creatorId, {
       tipId: tip.id,
       amount: tip.amount_eth,
@@ -106,6 +112,7 @@ export const tipService = {
 
     // Always emit WebSocket event to overlay (even if offline)
     // This allows creators to test alerts without being live
+    logger.info(`📡 [TipService] Broadcasting 'tip_event' to Overlay WS Helpers for ${creatorId}`);
     overlayWsHelpers.notifyTipEvent(creatorId, {
       tipId: tip.id,
       amount: tip.amount_eth,
