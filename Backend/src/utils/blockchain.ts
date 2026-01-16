@@ -18,7 +18,8 @@ export const getProvider = (): ethers.JsonRpcProvider => {
 export const verifyETHTransaction = async (
   txHash: string,
   expectedAmount: string,
-  fromAddress: string
+  fromAddress: string,
+  expectedToAddress: string
 ): Promise<boolean> => {
   try {
     const providerInstance = getProvider();
@@ -53,6 +54,11 @@ export const verifyETHTransaction = async (
 
     // Verify transaction is from expected address
     if (tx.from.toLowerCase() !== fromAddress.toLowerCase()) {
+      return false;
+    }
+
+    // Verify transaction is to expected address (Creator's wallet)
+    if (!tx.to || tx.to.toLowerCase() !== expectedToAddress.toLowerCase()) {
       return false;
     }
 

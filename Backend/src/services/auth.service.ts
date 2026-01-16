@@ -33,27 +33,21 @@ export const authService = {
     let user = await userModel.findByWalletAddress(input.walletAddress);
 
     if (!user) {
-      // Create new user if doesn't exist
+      // Create new user if doesn't exist (always default to viewer)
       try {
         user = await userModel.create({
           walletAddress: input.walletAddress,
-          role: input.role || 'viewer',
+          role: 'viewer', // Force default to viewer for all new accounts
         });
+        logger.info(`New user created: ${input.walletAddress} with role: viewer`);
       } catch (error) {
         logger.error('Failed to create user:', error);
         throw new Error('Failed to create user account. Please try again.');
       }
-    } else if (input.role && user.role !== input.role) {
-      // Update role if provided and different
-      try {
-        user = await userModel.onboard({
-          walletAddress: input.walletAddress,
-          role: input.role,
-        });
-      } catch (error) {
-        logger.error('Failed to update user role:', error);
-        throw new Error('Failed to update user role. Please try again.');
-      }
+    } else {
+      // User exists. We keep their current role from the database.
+      // We no longer allow the 'role' parameter in login to change the DB role.
+      logger.info(`Returning user login: ${input.walletAddress} (Existing role: ${user.role})`);
     }
 
     if (!user) {
@@ -75,8 +69,8 @@ export const authService = {
       const refreshTokenKey = `refresh_token:${user.id}:${refreshToken}`;
       await redis.setex(refreshTokenKey, 7 * 24 * 60 * 60, '1'); // 7 days TTL
     } catch (redisError) {
-      logger.error('Redis error during login (non-critical):', redisError);
-      // Continue without Redis - tokens will still work, just won't be stored
+      logger.error('CRITICAL: Redis error during login:', redisError);
+      throw new Error('Authentication service unavailable (Session storage failed)');
     }
 
     return {
@@ -162,17 +156,18 @@ export const authService = {
         await redis.setex(refreshTokenKey, 7 * 24 * 60 * 60, '1');
 
         // Also remove refresh token from valid tokens
-        if (payload.walletAddress) {
+        if (payload.walletAddress && refreshToken) {
           const user = await userModel.findByWalletAddress(payload.walletAddress);
           if (user) {
-            const refreshTokenStoreKey = `refresh_token:${user.id}:${refreshToken}`;
-            await redis.del(refreshTokenStoreKey);
+            const refreshTokenKey = `refresh_token:${user.id}:${refreshToken}`;
+            await redis.del(refreshTokenKey);
           }
         }
       }
+      logger.info('User logged out and tokens blacklisted');
     } catch (error) {
-      // Log but don't throw - logout should still succeed
-      logger.error('Logout error (non-critical):', error);
+      logger.error('Logout error (Redis/Security):', error);
+      throw new Error('Failed to securely logout. Please try again.');
     }
   },
 };

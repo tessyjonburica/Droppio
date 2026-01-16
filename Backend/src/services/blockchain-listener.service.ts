@@ -82,18 +82,18 @@ class BlockchainListener {
 
     try {
       logger.info(`Processing historical TipSent events from block ${fromBlock} to ${toBlock}`);
-      
+
       // Query past events
       const filter = this.contract.filters.TipSent();
       const events = await this.contract.queryFilter(filter, fromBlock, toBlock);
-      
+
       logger.info(`Found ${events.length} historical TipSent events to process`);
-      
+
       // Process each event
       for (const event of events) {
         // Type guard: EventLog has args, Log doesn't
         if (!('args' in event) || !event.args) continue;
-        
+
         const [from, to, amount, sessionId] = event.args;
         await this.handleTipSentEvent({
           from: from.toLowerCase(),
@@ -104,7 +104,7 @@ class BlockchainListener {
           blockNumber: event.blockNumber,
         });
       }
-      
+
       logger.info(`Finished processing ${events.length} historical events`);
     } catch (error) {
       logger.error('Error processing historical events:', error);
@@ -179,7 +179,7 @@ class BlockchainListener {
         logger.warn(`Available creators in database may not match this wallet address.`);
         return;
       }
-      
+
       logger.info(`Found creator: ${creator.id} (${creator.display_name || creator.wallet_address}) for wallet ${event.to}`);
 
       // Find viewer by wallet address (create if doesn't exist)
@@ -221,26 +221,22 @@ class BlockchainListener {
         }
       } catch (dbError: any) {
         // Check if error is due to duplicate tx_hash (unique constraint violation)
-        const isDuplicateError = 
-          dbError?.message?.includes('duplicate') || 
+        const isDuplicateError =
+          dbError?.message?.includes('duplicate') ||
           dbError?.message?.includes('unique') ||
-          dbError?.code === '23505' || 
+          dbError?.code === '23505' ||
           dbError?.code === 'PGRST116';
-          
+
         if (isDuplicateError) {
-          logger.info(`Tip with txHash ${event.txHash} already exists (duplicate detected), fetching existing tip`);
-          // Try to find existing tip by txHash
-          const existingTips = await tipModel.findByCreatorId(creator.id);
-          const existingTip = existingTips.find(t => t.tx_hash?.toLowerCase() === event.txHash.toLowerCase());
-          
+          logger.info(`[BlockchainListener] Tip already recorded by API for txHash: ${event.txHash}. Fetching record for broadcast.`);
+          // Try to find existing tip by txHash (optimized)
+          const existingTip = await tipModel.findByTxHash(event.txHash);
+
           if (existingTip) {
             tip = existingTip;
-            logger.info(`Found existing tip ${existingTip.id} for txHash ${event.txHash} - will still send WebSocket event`);
-            // Continue to send WebSocket event even for duplicates
+            logger.info(`[BlockchainListener] Found existing tip record ${existingTip.id}. Proceeding with Source of Truth broadcast.`);
           } else {
-            logger.warn(`Duplicate tip detected but could not find existing tip for txHash ${event.txHash}`);
-            // Still try to send WebSocket event in case it's a new connection
-            tip = null; // Set to null so we skip WebSocket events
+            logger.warn(`[BlockchainListener] Duplicate tip detected but could not find existing tip for txHash ${event.txHash}`);
             return;
           }
         } else {
@@ -402,12 +398,12 @@ class BlockchainListener {
 
     logger.info(`Manual sync: Processing TipSent events from block ${startBlock} to ${endBlock}${creatorWalletAddress ? ` for creator ${creatorWalletAddress}` : ''}`);
 
-    const filter = creatorWalletAddress 
+    const filter = creatorWalletAddress
       ? this.contract.filters.TipSent(null, creatorWalletAddress.toLowerCase())
       : this.contract.filters.TipSent();
-    
+
     const events = await this.contract.queryFilter(filter, startBlock, endBlock);
-    
+
     logger.info(`Found ${events.length} TipSent events to sync`);
 
     let synced = 0;
@@ -416,7 +412,7 @@ class BlockchainListener {
     for (const event of events) {
       // Type guard: EventLog has args, Log doesn't
       if (!('args' in event) || !event.args) continue;
-      
+
       try {
         const [from, to, amount, sessionId] = event.args;
         await this.handleTipSentEvent({

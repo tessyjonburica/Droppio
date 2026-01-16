@@ -141,5 +141,22 @@ export const tipModel = {
 
     return data as Tip;
   },
+
+  findByTxHash: async (txHash: string): Promise<Tip | null> => {
+    const { data, error } = await supabaseAdmin
+      .from('tips')
+      .select('*')
+      .eq('tx_hash', txHash)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return null;
+      }
+      throw new Error(`Failed to find tip by tx hash: ${error.message}`);
+    }
+
+    return data as Tip;
+  },
 };
 

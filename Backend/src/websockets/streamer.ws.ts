@@ -29,10 +29,8 @@ export const handleStreamerConnection = (ws: WebSocket, req: StreamerWebSocketRe
   }
 
   // Authenticate WebSocket connection
-  // Check Authorization header OR query param token
-  const authHeader = req.headers?.authorization;
-  const queryToken = url.searchParams.get('token');
-  const token = (authHeader && authHeader.split(' ')[1]) || queryToken;
+  // Query param 'token' is the standard for browser-based WebSockets
+  const token = url.searchParams.get('token');
 
   if (!token) {
     logger.warn(`Streamer connection rejected: No token provided. StreamerId: ${streamerId}`);
@@ -119,21 +117,21 @@ export const streamerWsHelpers = {
     logger.info(`🔌 [StreamerWS] Attempting to send ${event.type} to streamer: ${streamerId}`);
     const conn = wsManager.getStreamerConnection(streamerId);
     if (!conn) {
-      logger.warn(`⚠️ [StreamerWS] No active WebSocket connection found for streamer: ${streamerId}`);
+      logger.warn(`[StreamerWS] No active WebSocket connection found for streamer: ${streamerId}`);
       return;
     }
 
     if (conn.ws.readyState !== WebSocket.OPEN) {
-      logger.warn(`⚠️ [StreamerWS] Connection for ${streamerId} exists but state is NOT OPEN: ${conn.ws.readyState}`);
+      logger.warn(`[StreamerWS] Connection for ${streamerId} exists but state is NOT OPEN: ${conn.ws.readyState}`);
       return;
     }
 
     try {
       const message = JSON.stringify({ ...event, timestamp: new Date().toISOString() });
       conn.ws.send(message);
-      logger.info(`✅ [StreamerWS] Successfully sent ${event.type} to streamer ${streamerId}`);
+      logger.info(`[StreamerWS] Successfully sent ${event.type} to streamer ${streamerId}`);
     } catch (error) {
-      logger.error(`❌ [StreamerWS] Failed to send to streamer ${streamerId}:`, error);
+      logger.error(`[StreamerWS] Failed to send to streamer ${streamerId}:`, error);
     }
   },
 

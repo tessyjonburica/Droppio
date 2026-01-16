@@ -4,8 +4,6 @@ import { verifyWalletSignature } from '../utils/signature';
 import { verifyETHTransaction } from '../utils/blockchain';
 import { streamModel } from '../models/stream.model';
 import { userModel } from '../models/user.model';
-import { streamerWsHelpers } from '../websockets/streamer.ws';
-import { overlayWsHelpers } from '../websockets/overlay.ws';
 import { logger } from '../utils/logger';
 import { env } from '../config/env';
 
@@ -58,69 +56,43 @@ export const tipService = {
       throw new Error('Viewer not found');
     }
 
-    // Verify transaction hash with ethers provider
-    // In development mode or if explicitly skipped, we allow bypassing this
+    // Get creator user (needed for wallet address verification)
+    const creator = await userModel.findById(creatorId);
+    if (!creator) {
+      throw new Error('Creator not found');
+    }
+
     let isValidTx = false;
-    logger.info(`🔍 [TipService] Verifying transaction: ${input.txHash} for ${input.amountEth} ETH`);
+    logger.info(`[TipService] Verifying transaction: ${input.txHash} for ${input.amountEth} ETH to ${creator.wallet_address}`);
+
     if (env.SKIP_BLOCKCHAIN_VERIFICATION || (process.env.NODE_ENV === 'development' && input.txHash.startsWith('0x0000'))) {
       logger.info('   - Bypassing blockchain verification (Development Mode)');
       isValidTx = true;
     } else {
-      // verifyETHTransaction takes (txHash, expectedAmount, fromAddress)
-      isValidTx = await verifyETHTransaction(input.txHash, input.amountEth, walletAddress);
+      isValidTx = await verifyETHTransaction(input.txHash, input.amountEth, walletAddress, creator.wallet_address);
     }
 
     if (!isValidTx) {
-      logger.error(`❌ [TipService] Transaction verification failed for hash: ${input.txHash}`);
+      logger.error(`[TipService] Transaction verification failed for hash: ${input.txHash}`);
       throw new Error('Transaction verification failed');
     }
-    logger.info('✅ [TipService] Transaction verified');
-
-    // Get creator to validate they exist
-    const creator = await userModel.findById(creatorId);
-    if (!creator) {
-      logger.error(`❌ [TipService] Creator not found: ${creatorId}`);
-      throw new Error('Creator not found');
-    }
+    logger.info('[TipService] Transaction verified');
 
     // Prevention: Creators cannot tip themselves
     if (walletAddress.toLowerCase() === creator.wallet_address.toLowerCase()) {
-      logger.warn(`⚠️ [TipService] Self-tipping attempted by wallet: ${walletAddress}`);
+      logger.warn(`[TipService] Self-tipping attempted by wallet: ${walletAddress}`);
       throw new Error('You cannot tip yourself');
     }
 
     // Create tip record in DB
-    logger.info(`💾 [TipService] Creating tip record in DB for creator: ${creatorId}`);
+    logger.info(`[TipService] Creating tip record in DB for creator: ${creatorId}`);
     const tip = await tipModel.create(input, viewer.id, creatorId);
     if (!tip) {
-      logger.error(`❌ [TipService] Failed to create tip record for creator ${creatorId}`);
+      logger.error(`[TipService] Failed to create tip record for creator ${creatorId}`);
       throw new Error('Failed to create tip');
     }
-    logger.info(`🎉 [TipService] Tip created successfully: ${tip.id}`);
-
-    // Always emit WebSocket event to streamer dashboard (regardless of live status)
-    logger.info(`📡 [TipService] Broadcasting 'tip_received' to Streamer WS Helpers for ${creatorId}`);
-    streamerWsHelpers.notifyTipReceived(creatorId, {
-      tipId: tip.id,
-      amount: tip.amount_eth,
-      viewer: {
-        id: viewer.id,
-        walletAddress: viewer.wallet_address,
-        displayName: viewer.display_name,
-      },
-    });
-
-    // Always emit WebSocket event to overlay (even if offline)
-    // This allows creators to test alerts without being live
-    logger.info(`📡 [TipService] Broadcasting 'tip_event' to Overlay WS Helpers for ${creatorId}`);
-    overlayWsHelpers.notifyTipEvent(creatorId, {
-      tipId: tip.id,
-      amount: tip.amount_eth,
-      viewer: {
-        displayName: viewer.display_name,
-        walletAddress: viewer.wallet_address,
-      },
-    });
+    logger.info(`[TipService] Tip created successfully: ${tip.id}`);
+    logger.info(`[TipService] Tip recorded. Waiting for BlockchainListener to acknowledge and broadcast.`);
 
     return {
       ...tip,
@@ -135,9 +107,10 @@ export const tipService = {
   verifyTransaction: async (
     txHash: string,
     expectedAmount: string,
-    fromAddress: string
+    fromAddress: string,
+    expectedToAddress: string
   ): Promise<boolean> => {
     // Verify transaction using blockchain utilities
-    return verifyETHTransaction(txHash, expectedAmount, fromAddress);
+    return verifyETHTransaction(txHash, expectedAmount, fromAddress, expectedToAddress);
   },
 };

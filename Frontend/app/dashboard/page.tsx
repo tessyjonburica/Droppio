@@ -198,14 +198,20 @@ export default function DashboardPage() {
     // Initial poll
     pollData();
 
-    // Set up interval polling every 10 seconds
-    const interval = setInterval(pollData, 10000);
+    // Set up interval polling:
+    // - Every 60 seconds if WebSocket is ONLINE (health check mode)
+    // - Every 10 seconds if WebSocket is OFFLINE (active fallback mode)
+    const pollInterval = isConnected ? 60000 : 10000;
+
+    console.log(`[Dashboard] Starting polling with interval: ${pollInterval / 1000}s (WebSocket is ${isConnected ? 'ONLINE' : 'OFFLINE'})`);
+
+    const interval = setInterval(pollData, pollInterval);
 
     return () => {
       clearInterval(interval);
       console.log('[Dashboard] Polling stopped');
     };
-  }, [user?.id]); // Removed loadStats from dependencies to avoid unnecessary re-renders
+  }, [user?.id, isConnected]); // Re-run effect when isConnected changes to adjust interval
 
   const handleWebSocketMessage = useCallback((event: StreamerChannelEvent | ViewerChannelEvent | OverlayChannelEvent) => {
     console.log('[Dashboard] Received WebSocket event:', event.type, event);

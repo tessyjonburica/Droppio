@@ -24,10 +24,8 @@ export const handleOverlayConnection = (ws: WebSocket, req: OverlayWebSocketRequ
     return;
   }
 
-  // Extract access_token from query params or Authorization header
-  const accessToken =
-    url.searchParams.get('token') ||
-    (req.headers?.authorization && req.headers.authorization.split(' ')[1]);
+  // Extract access_token from query params (Standard for browser WebSockets)
+  const accessToken = url.searchParams.get('token');
 
   if (!accessToken) {
     logger.warn(`Overlay connection rejected: No access token provided. CreatorId: ${creatorId}`);
@@ -46,7 +44,7 @@ export const handleOverlayConnection = (ws: WebSocket, req: OverlayWebSocketRequ
     return;
   }
 
- 
+
   overlayModel
     .findByCreatorId(creatorId)
     .then(async overlay => {
@@ -112,18 +110,18 @@ export const overlayWsHelpers = {
       logger.warn(`No overlay connection found for streamer ${streamerId}`);
       return;
     }
-    
+
     if (conn.ws.readyState !== WebSocket.OPEN) {
       logger.warn(`Overlay connection for streamer ${streamerId} is not open (state: ${conn.ws.readyState})`);
       return;
     }
-    
+
     try {
       const message = JSON.stringify({ ...event, timestamp: new Date().toISOString() });
       conn.ws.send(message);
       logger.debug(`Sent ${event.type} to overlay for streamer ${streamerId}`);
-      } catch (error) {
-        logger.error(`Failed to send to overlay ${streamerId}:`, error);
+    } catch (error) {
+      logger.error(`Failed to send to overlay ${streamerId}:`, error);
     }
   },
 
@@ -147,13 +145,13 @@ export const overlayWsHelpers = {
         timestamp: new Date().toISOString(),
       },
     };
-    
+
     logger.info(`Sending tip_event to overlay for streamer ${streamerId}:`, {
       tipId: tipData.tipId,
       amount: tipData.amount,
       viewer: tipData.viewer.displayName || tipData.viewer.walletAddress,
     });
-    
+
     overlayWsHelpers.sendToOverlay(streamerId, event);
   },
 };
