@@ -156,8 +156,12 @@ export default function DashboardPage() {
         });
 
         // Reload stats to get updated totals from backend
-        console.log('[Dashboard] Triggering stats reload after WebSocket tip...');
-        loadStats();
+        // Reload stats to get updated totals from backend
+        // Add a small delay to allow DB propagation
+        console.log('[Dashboard] Triggering stats reload after WebSocket tip (delayed)...');
+        setTimeout(() => {
+          loadStats();
+        }, 1000);
 
         return newTips;
       });
@@ -206,7 +210,40 @@ export default function DashboardPage() {
             try {
               const tips = await creatorService.getTipsByCreator(user.id);
               console.log(`[Dashboard] Poll: Tips updated with ${tips?.length || 0} items`);
-              setRecentTips(tips);
+
+              setRecentTips(prev => {
+                if (!tips || tips.length === 0) return prev;
+
+                // Smart merge: Keep existing tips if they are newer/not in the polled list immediately
+                // This prevents "flicker" where a WS tip appears then disappears because polling was stale
+
+                // If polled list is significantly shorter, it might be an issue (or just empty)
+                // If polled list is longer, we usually want it.
+
+                // Simple strategy: Union by ID, sort by date
+                const allTips = [...prev, ...tips];
+                const uniqueTipsMap = new Map();
+
+                allTips.forEach(tip => {
+                  // Normalize ID
+                  const id = tip.tipId || tip.id;
+                  if (id && !uniqueTipsMap.has(id)) {
+                    uniqueTipsMap.set(id, tip);
+                  }
+                });
+
+                const uniqueTips = Array.from(uniqueTipsMap.values());
+
+                // Sort by created_at desc
+                uniqueTips.sort((a, b) => {
+                  const timeA = new Date(a.timestamp || a.created_at).getTime();
+                  const timeB = new Date(b.timestamp || b.created_at).getTime();
+                  return timeB - timeA;
+                });
+
+                return uniqueTips.slice(0, 50); // Keep last 50
+              });
+
               return tips;
             } catch (error: any) {
               console.error('[Dashboard] Failed to poll tips:', error?.message || error);

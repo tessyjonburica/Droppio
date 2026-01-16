@@ -100,6 +100,8 @@ export const creatorService = {
       throw new Error('Invalid creator ID');
     }
 
+    console.log(`[CreatorService] Fetching tips for creator: ${creatorId}`);
+
     try {
       // Try to use the efficient JOIN query first
       try {
@@ -112,7 +114,7 @@ export const creatorService = {
       } catch (joinError) {
         // If JOIN query fails (e.g., foreign key issues), fall back to manual method
         console.warn(`JOIN query failed, falling back to manual method:`, joinError);
-        
+
         // Get all tips for this creator
         const tips = await tipModel.findByCreatorId(creatorId);
 
@@ -140,10 +142,10 @@ export const creatorService = {
                 ...tip,
                 viewer: viewer
                   ? {
-                      id: viewer.id,
-                      wallet_address: viewer.wallet_address,
-                      display_name: viewer.display_name,
-                    }
+                    id: viewer.id,
+                    wallet_address: viewer.wallet_address,
+                    display_name: viewer.display_name,
+                  }
                   : null,
               };
             } catch (viewerError) {

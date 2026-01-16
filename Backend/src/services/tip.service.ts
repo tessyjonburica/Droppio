@@ -99,6 +99,14 @@ export const tipService = {
     // This allows the dashboard to update instantly without waiting for the blockchain listener
     logger.info(`[TipService] Broadcasting immediate tip event for: ${tip.id}`);
 
+    // Verification: specific log to check if tip is visible in DB query immediately
+    try {
+      const check = await tipModel.findById(tip.id);
+      logger.info(`[TipService] DB Verification - Tip found immediately: ${!!check}`);
+    } catch (e) {
+      logger.warn(`[TipService] DB Verification failed: ${e}`);
+    }
+
     const amountEth = input.amountEth;
 
     try {
