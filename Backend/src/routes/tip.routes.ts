@@ -16,9 +16,9 @@ const sendTipSchema = z.object({
     .object({
       streamId: z.string().uuid('Invalid stream ID').optional(),
       creatorId: z.string().uuid('Invalid creator ID').optional(),
-      amountUsdc: z.string().regex(/^\d+(\.\d{1,6})?$/, 'Invalid USDC amount'),
-      signature: z.string().min(1, 'Signature required'),
-      message: z.string().min(1, 'Message required'),
+      amountEth: z.string().regex(/^\d+(\.\d{1,18})?$/, 'Invalid ETH amount'),
+      signature: z.string().min(1, 'Signature required').optional(),
+      message: z.string().min(1, 'Message required').optional(),
       txHash: z.string().regex(/^0x[a-fA-F0-9]{64}$/, 'Invalid transaction hash'),
     })
     .refine(data => (data.streamId && !data.creatorId) || (!data.streamId && data.creatorId), {
