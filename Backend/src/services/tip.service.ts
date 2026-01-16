@@ -6,6 +6,8 @@ import { streamModel } from '../models/stream.model';
 import { userModel } from '../models/user.model';
 import { logger } from '../utils/logger';
 import { env } from '../config/env';
+import { streamerWsHelpers } from '../websockets/streamer.ws';
+import { overlayWsHelpers } from '../websockets/overlay.ws';
 
 export const tipService = {
   sendTip: async (walletAddress: string, input: SendTipInput): Promise<TipResponse> => {
@@ -92,7 +94,38 @@ export const tipService = {
       throw new Error('Failed to create tip');
     }
     logger.info(`[TipService] Tip created successfully: ${tip.id}`);
-    logger.info(`[TipService] Tip recorded. Waiting for BlockchainListener to acknowledge and broadcast.`);
+
+    // Broadcast immediately (Source of Truth #1: API confirmation)
+    // This allows the dashboard to update instantly without waiting for the blockchain listener
+    logger.info(`[TipService] Broadcasting immediate tip event for: ${tip.id}`);
+
+    const amountEth = input.amountEth;
+
+    try {
+      // 1. Send to Streamer Dashboard
+      streamerWsHelpers.notifyTipReceived(creatorId, {
+        tipId: tip.id,
+        amount: amountEth,
+        viewer: {
+          id: viewer.id,
+          walletAddress: viewer.wallet_address,
+          displayName: viewer.display_name,
+        },
+      });
+
+      // 2. Send to Overlay
+      overlayWsHelpers.notifyTipEvent(creatorId, {
+        tipId: tip.id,
+        amount: amountEth,
+        viewer: {
+          displayName: viewer.display_name,
+          walletAddress: viewer.wallet_address,
+        },
+      });
+    } catch (wsError) {
+      // Don't fail the request if WS broadcast fails, just log it
+      logger.error('[TipService] Failed to broadcast immediate tip event:', wsError);
+    }
 
     return {
       ...tip,
@@ -110,7 +143,7 @@ export const tipService = {
     fromAddress: string,
     expectedToAddress: string
   ): Promise<boolean> => {
-  
+
 
     return verifyETHTransaction(txHash, expectedAmount, fromAddress, expectedToAddress);
   },

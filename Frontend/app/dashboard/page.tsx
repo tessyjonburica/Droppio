@@ -133,17 +133,33 @@ export default function DashboardPage() {
     console.log('[Dashboard] Received WebSocket event:', event.type, event);
     if (event.type === 'tip_received') {
       console.log('[Dashboard] Updating recent tips with new tip:', event.data.tipId);
+
       setRecentTips((prev) => {
+        // Deduplication: Check if tip already exists
+        const exists = prev.some(tip =>
+          (tip.tipId === event.data.tipId) ||
+          (tip.id === event.data.tipId)
+        );
+
+        if (exists) {
+          console.log(`[Dashboard] Duplicate tip received via WebSocket, ignoring: ${event.data.tipId}`);
+          return prev;
+        }
+
         const newTips = [event.data, ...prev].slice(0, 10);
         console.log('[Dashboard] New tips state length:', newTips.length);
+
+        // Show toast only for new tips
+        toast({
+          title: 'New tip received!',
+          description: `${event.data.amount} ETH from ${event.data.viewer.displayName || `${event.data.viewer.walletAddress.slice(0, 6)}...`}`,
+        });
+
+        // Reload stats to get updated totals from backend
+        console.log('[Dashboard] Triggering stats reload after WebSocket tip...');
+        loadStats();
+
         return newTips;
-      });
-      // Reload stats to get updated totals from backend
-      console.log('[Dashboard] Triggering stats reload after WebSocket tip...');
-      loadStats();
-      toast({
-        title: 'New tip received!',
-        description: `${event.data.amount} ETH from ${event.data.viewer.displayName || `${event.data.viewer.walletAddress.slice(0, 6)}...`}`,
       });
     }
   }, [toast, loadStats]);
