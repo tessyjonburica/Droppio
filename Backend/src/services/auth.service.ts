@@ -67,7 +67,7 @@ export const authService = {
     // Store refresh token in Redis with rotation
     try {
       const refreshTokenKey = `refresh_token:${user.id}:${refreshToken}`;
-      await redis.setex(refreshTokenKey, 7 * 24 * 60 * 60, '1'); // 7 days TTL
+      await redis.setex(refreshTokenKey, 7 * 24 * 60 * 60, '1');
     } catch (redisError) {
       logger.error('CRITICAL: Redis error during login:', redisError);
       throw new Error('Authentication service unavailable (Session storage failed)');

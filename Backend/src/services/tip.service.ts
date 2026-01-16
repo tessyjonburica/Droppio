@@ -110,7 +110,8 @@ export const tipService = {
     fromAddress: string,
     expectedToAddress: string
   ): Promise<boolean> => {
-    // Verify transaction using blockchain utilities
+  
+
     return verifyETHTransaction(txHash, expectedAmount, fromAddress, expectedToAddress);
   },
 };
