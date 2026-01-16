@@ -9,8 +9,8 @@ const router = Router();
 
 // POST /tips/send
 // Requires authentication + viewer role
-// Body: { streamId?, creatorId?, amountUsdc, signature, message, txHash }
-// Either streamId OR creatorId must be provided (not both)
+// Body: { streamId?, creatorId?, amountEth, signature, message, txHash }
+
 const sendTipSchema = z.object({
   body: z
     .object({
