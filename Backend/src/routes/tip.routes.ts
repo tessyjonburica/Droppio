@@ -28,7 +28,7 @@ const sendTipSchema = z.object({
 router.post(
   '/send',
   authenticateToken,
-  requireRole(['viewer']),
+  requireRole(['viewer', 'creator']),
   validate(sendTipSchema),
   tipController.sendTip
 );
