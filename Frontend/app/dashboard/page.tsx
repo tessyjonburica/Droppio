@@ -128,6 +128,33 @@ export default function DashboardPage() {
     }
   }, [user?.id, toast]);
 
+
+  const handleWebSocketMessage = useCallback((event: StreamerChannelEvent | ViewerChannelEvent | OverlayChannelEvent) => {
+    console.log('[Dashboard] Received WebSocket event:', event.type, event);
+    if (event.type === 'tip_received') {
+      console.log('[Dashboard] Updating recent tips with new tip:', event.data.tipId);
+      setRecentTips((prev) => {
+        const newTips = [event.data, ...prev].slice(0, 10);
+        console.log('[Dashboard] New tips state length:', newTips.length);
+        return newTips;
+      });
+      // Reload stats to get updated totals from backend
+      console.log('[Dashboard] Triggering stats reload after WebSocket tip...');
+      loadStats();
+      toast({
+        title: 'New tip received!',
+        description: `${event.data.amount} ETH from ${event.data.viewer.displayName || `${event.data.viewer.walletAddress.slice(0, 6)}...`}`,
+      });
+    }
+  }, [toast, loadStats]);
+
+  const { isConnected } = useWebSocket({
+    channel: 'streamer',
+    id: user?.id || '',
+    enabled: !!user?.id,
+    onMessage: handleWebSocketMessage,
+  });
+
   // Polling for stats and tips (fallback if WebSocket fails)
   useEffect(() => {
     if (!user?.id) return;
@@ -137,7 +164,6 @@ export default function DashboardPage() {
     const MAX_CONSECUTIVE_ERRORS = 3;
 
     const pollData = async () => {
-      // Skip if offline
       if (!window.navigator.onLine) {
         console.warn('[Dashboard] Polling skipped: offline');
         return;
@@ -213,31 +239,7 @@ export default function DashboardPage() {
     };
   }, [user?.id, isConnected]); // Re-run effect when isConnected changes to adjust interval
 
-  const handleWebSocketMessage = useCallback((event: StreamerChannelEvent | ViewerChannelEvent | OverlayChannelEvent) => {
-    console.log('[Dashboard] Received WebSocket event:', event.type, event);
-    if (event.type === 'tip_received') {
-      console.log('[Dashboard] Updating recent tips with new tip:', event.data.tipId);
-      setRecentTips((prev) => {
-        const newTips = [event.data, ...prev].slice(0, 10);
-        console.log('[Dashboard] New tips state length:', newTips.length);
-        return newTips;
-      });
-      // Reload stats to get updated totals from backend
-      console.log('[Dashboard] Triggering stats reload after WebSocket tip...');
-      loadStats();
-      toast({
-        title: 'New tip received!',
-        description: `${event.data.amount} ETH from ${event.data.viewer.displayName || `${event.data.viewer.walletAddress.slice(0, 6)}...`}`,
-      });
-    }
-  }, [toast, loadStats]);
 
-  const { isConnected } = useWebSocket({
-    channel: 'streamer',
-    id: user?.id || '',
-    enabled: !!user?.id,
-    onMessage: handleWebSocketMessage,
-  });
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
