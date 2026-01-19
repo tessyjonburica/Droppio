@@ -150,7 +150,7 @@ export const wsManager = {
         (conn.ws as any).isAlive = false;
         conn.ws.ping();
       }
-    }, 30000);
+    }, 20000);
 
     // Cleanup interval: remove dead connections every 2 minutes
     const cleanupInterval = setInterval(() => {

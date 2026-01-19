@@ -83,7 +83,8 @@ export function useWebSocket({ channel, id, onMessage, enabled = true }: UseWebS
 
       // Reconnect with exponential backoff
       const currentAttempts = reconnectAttempts;
-      if (enabled && currentAttempts < 5) {
+      // Max 10 attempts
+      if (enabled && currentAttempts < 10) {
         const delay = Math.min(1000 * Math.pow(2, currentAttempts), 30000);
         reconnectTimeoutRef.current = setTimeout(() => {
           setReconnectAttempts((prev) => prev + 1);
