@@ -12,8 +12,15 @@ import {
 import { Wallet, LogOut } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useEffect } from 'react';
+import { cn } from '@/lib/utils';
 
-export function WalletConnect({ showDisconnect = true }: { showDisconnect?: boolean }) {
+export function WalletConnect({
+  showDisconnect = true,
+  className
+}: {
+  showDisconnect?: boolean;
+  className?: string;
+}) {
   const { address, isConnected } = useAccount();
   const { connect, connectors, isPending, error, reset } = useConnect();
   const { disconnect } = useDisconnect();
@@ -56,7 +63,7 @@ export function WalletConnect({ showDisconnect = true }: { showDisconnect?: bool
 
   if (isConnected && address) {
     return (
-      <div className="flex items-center gap-4">
+      <div className={cn("flex items-center gap-4", className)}>
         <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/5 rounded-full border border-primary/20">
           <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
           <span className="text-xs font-mono font-medium text-primary">
@@ -81,7 +88,7 @@ export function WalletConnect({ showDisconnect = true }: { showDisconnect?: bool
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button className="font-semibold shadow-sm hover:shadow-md transition-all">
+        <Button className={cn("font-semibold shadow-sm hover:shadow-md transition-all", className)}>
           <Wallet className="mr-2 h-4 w-4" />
           Connect Wallet
         </Button>
