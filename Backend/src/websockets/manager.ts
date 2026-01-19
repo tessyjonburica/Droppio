@@ -118,7 +118,10 @@ export const wsManager = {
 
       // Ping streamers
       for (const [streamerId, conn] of wsConnections.streamers.entries()) {
-        if ((conn.ws as any).isAlive === false) return wsManager.removeStreamerConnection(streamerId);
+        if ((conn.ws as any).isAlive === false) {
+          wsManager.removeStreamerConnection(streamerId);
+          continue;
+        }
 
         (conn.ws as any).isAlive = false;
         conn.ws.ping();
@@ -127,7 +130,10 @@ export const wsManager = {
       // Ping viewers
       for (const [streamId, viewers] of wsConnections.viewers.entries()) {
         for (const conn of viewers) {
-          if ((conn.ws as any).isAlive === false) return wsManager.removeViewerConnection(streamId, conn.ws);
+          if ((conn.ws as any).isAlive === false) {
+            wsManager.removeViewerConnection(streamId, conn.ws);
+            continue;
+          }
 
           (conn.ws as any).isAlive = false;
           conn.ws.ping();
@@ -136,7 +142,10 @@ export const wsManager = {
 
       // Ping overlays
       for (const [streamerId, conn] of wsConnections.overlays.entries()) {
-        if ((conn.ws as any).isAlive === false) return wsManager.removeOverlayConnection(streamerId);
+        if ((conn.ws as any).isAlive === false) {
+          wsManager.removeOverlayConnection(streamerId);
+          continue;
+        }
 
         (conn.ws as any).isAlive = false;
         conn.ws.ping();

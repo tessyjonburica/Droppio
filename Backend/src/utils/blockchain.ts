@@ -57,9 +57,33 @@ export const verifyETHTransaction = async (
       return false;
     }
 
-    // Verify transaction is to expected address (Creator's wallet)
-    if (!tx.to || tx.to.toLowerCase() !== expectedToAddress.toLowerCase()) {
+    // Verify transaction is to expected address (Creator's wallet OR Droppio Contract)
+    const toAddress = tx.to?.toLowerCase();
+    const expectedCreatorAddress = expectedToAddress.toLowerCase();
+    const contractAddress = env.DROPPIO_CONTRACT_ADDRESS.toLowerCase();
+
+    let isDirectTip = toAddress === expectedCreatorAddress;
+    let isContractTip = toAddress === contractAddress;
+
+    if (!isDirectTip && !isContractTip) {
       return false;
+    }
+
+    // If it's a contract tip, we need to verify the recipient address inside the call data
+    if (isContractTip) {
+      try {
+        const DROPPIO_INTERFACE = new ethers.Interface(['function tip(address to) public payable']);
+        const decoded = DROPPIO_INTERFACE.decodeFunctionData('tip', tx.data);
+        const recipientInContract = decoded[0].toLowerCase();
+
+        if (recipientInContract !== expectedCreatorAddress) {
+          console.warn(`[Blockchain] Contract recipient mismatch: expected ${expectedCreatorAddress}, found ${recipientInContract}`);
+          return false;
+        }
+      } catch (error) {
+        console.error('[Blockchain] Failed to decode contract transaction data:', error);
+        return false;
+      }
     }
 
     // Convert expected amount (ETH) to Wei
