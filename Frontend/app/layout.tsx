@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Inter, Pacifico } from 'next/font/google';
+import { Inter, Lobster } from 'next/font/google';
 import './globals.css';
 import { Providers } from './providers';
 import { Analytics } from "@vercel/analytics/react"
@@ -11,10 +11,10 @@ const inter = Inter({
   display: 'swap',
 });
 
-const pacifico = Pacifico({
+const lobster = Lobster({
   weight: '400',
   subsets: ['latin'],
-  variable: '--font-pacifico',
+  variable: '--font-lobster',
   display: 'swap',
 });
 
@@ -71,7 +71,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${inter.variable} ${pacifico.variable}`}>
+    <html lang="en" className={`${inter.variable} ${lobster.variable}`}>
       <body>
         <Providers>{children}</Providers>
         <Analytics />

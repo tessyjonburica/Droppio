@@ -8,7 +8,7 @@ interface LogoProps {
 export function Logo({ className, short = false }: LogoProps) {
   return (
     <h1 className={cn('font-logo text-primary tracking-wider', className)}>
-      {short ? 'd.' : 'droppio'}
+      {short ? 'd.' : 'droppio.'}
     </h1>
   );
 }

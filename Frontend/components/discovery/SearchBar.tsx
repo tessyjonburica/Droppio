@@ -6,7 +6,11 @@ import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
 import { creatorService, CreatorProfile } from '@/services/creator.service';
 
-export function SearchBar() {
+interface SearchBarProps {
+    variant?: 'default' | 'hero';
+}
+
+export function SearchBar({ variant = 'default' }: SearchBarProps) {
     const router = useRouter();
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState<CreatorProfile[]>([]);
@@ -58,19 +62,24 @@ export function SearchBar() {
     };
 
     return (
-        <div className="relative max-w-2xl mx-auto mb-8" ref={searchRef}>
+        <div className={`relative w-full ${variant === 'default' ? 'max-w-2xl mx-auto mb-8' : ''}`} ref={searchRef}>
             <div className="relative">
                 <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5" />
                 <Input
                     type="text"
-                    placeholder="Search creators by username, wallet, or platform..."
+                    placeholder="Search creators, streams, or platforms"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     onFocus={() => {
                         if (searchResults.length > 0) setShowResults(true);
                     }}
-                    className="pl-12 h-14 text-lg"
+                    className={`pl-12 border-none bg-transparent focus-visible:ring-0 ${variant === 'hero' ? 'h-14 text-lg' : 'h-12'}`}
                 />
+                {variant === 'hero' && (
+                    <div className="absolute right-0 top-1/2 -translate-y-1/2 pr-4 flex items-center">
+                        <span className="text-xs font-semibold px-2 py-1 rounded bg-slate-100 text-primary uppercase tracking-wider">Advanced</span>
+                    </div>
+                )}
             </div>
 
             {showResults && (
