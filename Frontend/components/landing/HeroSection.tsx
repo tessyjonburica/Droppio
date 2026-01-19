@@ -3,12 +3,9 @@
 import { SearchBar } from '@/components/discovery/SearchBar';
 import { Button } from '@/components/ui/button';
 import { WalletConnect } from '@/components/auth/wallet-connect';
-import { useAuth } from '@/hooks/use-auth';
 import Link from 'next/link';
 
 export function HeroSection() {
-    const { isConnected } = useAuth();
-
     return (
         <section className="relative px-4 pt-12 pb-24 md:pt-20 md:pb-32 overflow-hidden">
             {/* Background with Teal Gradient and Dot Pattern */}
