@@ -3,7 +3,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { useAccount, useSignMessage } from 'wagmi';
-import { Header } from '@/components/layout/header';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -230,10 +229,10 @@ export default function TipPage() {
             <div className="relative inline-block w-fit group">
               <div className="w-56 h-56 rounded-full border-4 border-white shadow-2xl overflow-hidden relative">
                 {creator.avatar_url ? (
-                  <img src={creator.avatar_url} alt={creator.display_name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  <img src={creator.avatar_url ?? undefined} alt={creator.display_name ?? ""} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                 ) : (
                   <div className="w-full h-full bg-primary/20 flex items-center justify-center text-4xl font-bold text-primary">
-                    {creator.display_name?.[0].toUpperCase()}
+                    {creator.display_name?.[0].toUpperCase() ?? "C"}
                   </div>
                 )}
               </div>
