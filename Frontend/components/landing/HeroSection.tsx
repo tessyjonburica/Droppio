@@ -61,7 +61,7 @@ export function HeroSection() {
                 </div>
 
                 {/* Search Bar - Positioned overlapping the bottom */}
-                <div className="absolute -bottom-7 left-1/2 -translate-x-1/2 w-full max-w-3xl px-4" ref={searchRef}>
+                <div id="search-section" className="absolute -bottom-7 left-1/2 -translate-x-1/2 w-full max-w-3xl px-4" ref={searchRef}>
                     <div className="bg-white rounded-full shadow-2xl p-1 flex items-center pr-6">
                         <div className="flex-1">
                             <SearchBar variant="hero" />

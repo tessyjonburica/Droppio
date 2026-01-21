@@ -15,25 +15,33 @@ export function FooterCTA() {
 
             <div className="container relative z-10 mx-auto px-4 text-center">
                 <h2 className="text-4xl md:text-6xl font-bold text-white mb-12">
-                    Ready to empower your journey?
+                    Ready to become a creator?
                 </h2>
 
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-24">
-                    <Link href="/discovery">
-                        <Button
-                            size="lg"
-                            className="bg-white text-primary hover:bg-white/90 text-xl font-bold px-12 py-8 rounded-full shadow-xl h-16"
-                        >
-                            Start Tipping
-                        </Button>
-                    </Link>
-                    <Link href="/creators">
+                    <Button
+                        size="lg"
+                        className="bg-primary hover:bg-primary/90 text-white text-lg font-semibold px-12 py-7 rounded-2xl h-auto"
+                        onClick={() => {
+                            const element = document.getElementById('search-section');
+                            if (element) {
+                                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                // Optional: focus search input
+                                setTimeout(() => {
+                                    element.querySelector('input')?.focus();
+                                }, 600);
+                            }
+                        }}
+                    >
+                        Start Tipping
+                    </Button>
+                    <Link href="/creator-login">
                         <Button
                             size="lg"
                             variant="outline"
                             className="bg-primary-accent/20 border-white/40 text-white hover:bg-white/10 text-xl font-bold px-12 py-8 rounded-full h-16"
                         >
-                            Explore Creators
+                            Become a Creator
                         </Button>
                     </Link>
                 </div>
@@ -45,12 +53,12 @@ export function FooterCTA() {
                     </div>
 
                     <div className="flex items-center gap-8">
-                        <a href="#" className="text-white/60 hover:text-white transition-colors font-medium">Twitter</a>
-                        <a href="#" className="text-white/60 hover:text-white transition-colors font-medium">Discord</a>
+                        <a href="https://x.com/droppiohq" className="text-white/60 hover:text-white transition-colors font-medium">X</a>
+                        <a href="https://discord.gg/" className="text-white/60 hover:text-white transition-colors font-medium">Discord</a>
                     </div>
 
                     <div className="text-white/40 text-sm font-medium">
-                        © 2024 Droppio.
+                        © 2026 Droppio.
                     </div>
                 </div>
             </div>
