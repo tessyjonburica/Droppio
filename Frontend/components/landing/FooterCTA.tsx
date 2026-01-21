@@ -21,7 +21,7 @@ export function FooterCTA() {
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-24">
                     <Button
                         size="lg"
-                        className="bg-primary hover:bg-primary/90 text-white text-lg border-white/50 font-semibold px-12 py-7 rounded-2xl h-auto"
+                        className="bg-primary hover:bg-primary/90 text-white text-lg border border-white/50 font-semibold px-12 py-7 rounded-2xl h-auto"
                         onClick={() => {
                             const element = document.getElementById('search-section');
                             if (element) {
