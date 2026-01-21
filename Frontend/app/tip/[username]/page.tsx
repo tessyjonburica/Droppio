@@ -14,7 +14,6 @@ import { useWebSocket, StreamerChannelEvent, ViewerChannelEvent, OverlayChannelE
 import { usePolling } from '@/hooks/use-polling';
 import { useToast } from '@/hooks/use-toast';
 import { generateMessage } from '@/utils/signature';
-import { formatDistanceToNow } from 'date-fns';
 import { useAuthStore } from '@/store/auth-store';
 import { authService } from '@/services/auth.service';
 import { useTip } from '@/hooks/useTip';
@@ -254,7 +253,7 @@ export default function TipPage() {
             <div className="space-y-6">
               <h3 className="text-xs uppercase tracking-[0.2em] font-black text-slate-400">RECENT DROPS</h3>
               <div className="space-y-4">
-                {recentTips.length > 0 ? recentTips.map((tip, i) => (
+                {recentTips.length > 0 ? recentTips.map((tip) => (
                   <div key={tip.id} className="flex gap-4 items-center">
                     <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/5">
                       <Sparkles className="w-4 h-4 text-primary" />
