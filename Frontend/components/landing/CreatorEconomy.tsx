@@ -73,7 +73,7 @@ export function CreatorEconomy() {
                                     </div>
                                     <h3 className="text-3xl font-bold text-[#303642]">Slava</h3>
                                 </div>
-                                <div className="bg-[#5C899D] p-6 pt-10 rounded-[40px] shadow-xl aspect-[0.85] flex flex-col justify-between relative overflow-hidden group border border-white">
+                                <div className="bg-[#DFE8E6] p-6 pt-10 rounded-[40px] shadow-xl aspect-[0.85] flex flex-col justify-between relative overflow-hidden group border border-white">
                                     <div className="flex gap-1.5 absolute top-6 left-6">
                                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border border-[#303642]/10 text-[#303642]">X</span>
                                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border border-[#303642]/10 text-[#303642]">10 Tips</span>
