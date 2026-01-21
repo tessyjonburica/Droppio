@@ -4,7 +4,6 @@ import { SearchBar } from '@/components/discovery/SearchBar';
 import { Button } from '@/components/ui/button';
 import { WalletConnect } from '@/components/auth/wallet-connect';
 import { useRef } from 'react';
-import Link from 'next/link';
 
 export function HeroSection() {
     const searchRef = useRef<HTMLDivElement>(null);
