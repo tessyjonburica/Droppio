@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { useAccount, useSignMessage } from 'wagmi';
 import { Header } from '@/components/layout/header';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { WalletConnect } from '@/components/auth/wallet-connect';
@@ -20,6 +20,9 @@ import { useAuthStore } from '@/store/auth-store';
 import { authService } from '@/services/auth.service';
 import { useTip } from '@/hooks/useTip';
 import { SuccessModal } from '@/components/tip/SuccessModal';
+import { Sparkles, Wallet, ShieldCheck, LockIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import Link from 'next/link';
 
 export default function TipPage() {
   const params = useParams();
@@ -31,6 +34,7 @@ export default function TipPage() {
   const [isLoadingCreator, setIsLoadingCreator] = useState(true);
   const [activeStream, setActiveStream] = useState<any>(null);
   const [amount, setAmount] = useState('');
+  const [currency, setCurrency] = useState<'ETH' | 'SOL' | 'USDC'>('ETH');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [recentTips, setRecentTips] = useState<TipResponse[]>([]);
 
@@ -67,8 +71,6 @@ export default function TipPage() {
     try {
       const timestamp = Date.now();
       const message = generateMessage(address, timestamp);
-
-      // Use Wagmi hook for better mobile support
       const signature = await signMessageAsync({ message });
 
       await authService.login({
@@ -93,33 +95,27 @@ export default function TipPage() {
     }
   };
 
-  // Auto-authenticate when wallet is connected but not authenticated
   useEffect(() => {
     if (isConnected && address && !isAuthenticated && !isLoggingIn) {
       handleLogin();
     }
   }, [isConnected, address, isAuthenticated, isLoggingIn]);
 
-
-  // Load active stream
   const loadActiveStream = useCallback(async () => {
     if (!creator?.id) return null;
     try {
       const stream = await streamService.getActiveStream(creator.id);
       setActiveStream(stream);
-      // Load recent tips when stream is found
       if (stream) {
         try {
           const tips = await tipService.getTipsByStream(stream.id);
           setRecentTips(tips);
         } catch (tipError) {
-          // Tips endpoint might not exist yet, that's okay
           console.error('Failed to load tips:', tipError);
         }
       }
       return stream;
     } catch (error) {
-      // Stream might not be active, that's okay
       setActiveStream(null);
       return null;
     }
@@ -131,7 +127,6 @@ export default function TipPage() {
     }
   }, [creator?.id, loadActiveStream]);
 
-  // WebSocket for real-time updates
   const { isConnected: wsConnected } = useWebSocket({
     channel: 'viewer',
     id: activeStream?.id || '',
@@ -145,7 +140,6 @@ export default function TipPage() {
     },
   });
 
-  // Polling fallback
   usePolling({
     fetchFn: loadActiveStream,
     onData: (stream) => {
@@ -157,86 +151,37 @@ export default function TipPage() {
 
   const handleTip = async () => {
     if (!isAuthenticated || !address) {
-      toast({
-        title: 'Not signed in',
-        description: 'Please connect your wallet to send a tip',
-        variant: 'destructive',
-      });
+      toast({ title: 'Not signed in', description: 'Please connect your wallet', variant: 'destructive' });
       return;
     }
+    if (!creator) return;
 
-    if (!creator) {
-      toast({
-        title: 'Creator not loaded',
-        description: 'Please wait for creator profile to load',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    // Prevention: Creators cannot tip themselves
     if (user?.walletAddress.toLowerCase() === creator.wallet_address.toLowerCase()) {
-      toast({
-        title: 'Action not allowed',
-        description: 'You cannot tip your own profile',
-        variant: 'destructive',
-      });
+      toast({ title: 'Action not allowed', description: 'You cannot tip yourself', variant: 'destructive' });
       return;
     }
 
     const tipAmount = parseFloat(amount);
     if (isNaN(tipAmount) || tipAmount <= 0) {
-      toast({
-        title: 'Invalid amount',
-        description: 'Please enter a valid tip amount',
-        variant: 'destructive',
-      });
+      toast({ title: 'Invalid amount', description: 'Please enter a valid amount', variant: 'destructive' });
       return;
     }
 
-    console.log('🚀 [TipPage] handleTip called');
-    console.log('   - Amount:', amount);
-    console.log('   - Creator:', creator.display_name, creator.id);
-    console.log('   - Stream:', activeStream?.id || 'OFFLINE');
-
     try {
-      // 1. Send Real On-Chain ETH Transaction
-      console.log('🔗 [TipPage] Initiating on-chain transaction...');
       const hash = await sendOnChainTip(creator.wallet_address, amount);
-      if (!hash) {
-        console.warn('❌ [TipPage] On-chain transaction failed or was cancelled');
-        return;
-      }
-      console.log('✅ [TipPage] On-chain transaction successful, Hash:', hash);
+      if (!hash) return;
 
-      // 2. Notify Backend with Tx Hash
-      const tipData: any = {
-        amountEth: tipAmount.toString(),
-        txHash: hash,
-      };
+      const tipData: any = { amountEth: tipAmount.toString(), txHash: hash };
+      if (activeStream) tipData.streamId = activeStream.id;
+      else tipData.creatorId = creator.id;
 
-      if (activeStream) {
-        tipData.streamId = activeStream.id;
-      } else {
-        tipData.creatorId = creator.id;
-      }
-
-      console.log('📡 [TipPage] Notifying backend with data:', tipData);
       const newTip = await tipService.sendTip(tipData);
-      console.log('🎉 [TipPage] Backend confirmed tip:', newTip.id);
-
-      // 3. Update UI and show success modal
       setRecentTips((prev) => [newTip, ...prev].slice(0, 10));
       setSuccessTxHash(hash);
       setShowSuccessModal(true);
       setAmount('');
     } catch (error: any) {
-      console.error('💥 [TipPage] Tip execution error:', error);
-      toast({
-        title: 'Tip failed',
-        description: error.message || 'Failed to send tip. Please try again.',
-        variant: 'destructive',
-      });
+      toast({ title: 'Tip failed', description: error.message || 'Failed to send tip', variant: 'destructive' });
     }
   };
 
@@ -245,187 +190,191 @@ export default function TipPage() {
     resetTipState();
   };
 
-
-  if (isLoadingCreator) {
-    return (
-      <>
-        <Header />
-        <main className="min-h-screen bg-soft-mint">
-          <div className="container mx-auto px-4 py-8">
-            <div className="max-w-2xl mx-auto">
-              <Card>
-                <CardContent className="p-8 text-center">
-                  <p className="text-muted-foreground">Loading creator profile...</p>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </main>
-      </>
-    );
-  }
-
-  if (!creator) {
-    return (
-      <>
-        <Header />
-        <main className="min-h-screen bg-soft-mint">
-          <div className="container mx-auto px-4 py-8">
-            <div className="max-w-2xl mx-auto">
-              <Card>
-                <CardContent className="p-8 text-center">
-                  <p className="text-muted-foreground">Creator not found</p>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </main>
-      </>
-    );
-  }
+  if (isLoadingCreator) return <div className="min-h-screen flex items-center justify-center bg-soft-mint text-primary-dark">Loading your favorite creator...</div>;
+  if (!creator) return <div className="min-h-screen flex items-center justify-center bg-soft-mint text-primary-dark">Creator not found</div>;
 
   return (
-    <>
-      <Header />
-      <main className="min-h-screen bg-soft-mint">
-        <div className="container mx-auto px-4 py-8">
-          <div className="max-w-2xl mx-auto">
-            {/* Creator Profile */}
-            <Card className="mb-6">
-              <CardHeader>
-                <div className="flex items-center gap-4">
-                  {creator?.avatar_url ? (
-                    <img
-                      src={creator.avatar_url}
-                      alt={creator.display_name || 'Creator'}
-                      className="w-16 h-16 rounded-full"
-                    />
-                  ) : (
-                    <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center">
-                      <span className="text-2xl text-primary font-bold">
-                        {(creator?.display_name || 'C')[0].toUpperCase()}
-                      </span>
+    <div className="min-h-screen bg-gradient-to-br from-[#F1F9F9] to-[#E8F2F2] relative overflow-hidden font-sans text-slate-900">
+      {/* Background Decorative Elements */}
+      <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-primary/5 rounded-full blur-3xl -mr-64 -mt-64" />
+      <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-primary/5 rounded-full blur-3xl -ml-32 -mb-32" />
+
+      {/* Top Header Placeholder / Wallet Connect */}
+      <div className="container mx-auto px-6 py-8 flex justify-between items-center relative z-20">
+        <Link href="/">
+          <span className="font-header text-3xl text-primary">droppio.</span>
+        </Link>
+
+        {isConnected && address ? (
+          <div className="bg-white/80 backdrop-blur-md rounded-full px-6 py-3 shadow-sm border border-white/50 flex flex-col items-end">
+            <span className="text-[10px] uppercase tracking-widest font-bold text-primary/60 mb-0.5">CONNECTED WALLET</span>
+            <div className="flex items-center gap-3">
+              <span className="font-mono font-bold text-primary text-lg">
+                {address.slice(0, 6)}...{address.slice(-4)}
+              </span>
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20">
+                <Wallet className="w-5 h-5 text-primary" />
+              </div>
+            </div>
+          </div>
+        ) : (
+          <WalletConnect className="bg-primary text-white rounded-full px-8 py-4 shadow-xl hover:bg-primary/90 transition-all font-bold" />
+        )}
+      </div>
+
+      <main className="container mx-auto px-6 py-12 relative z-10">
+        <div className="flex flex-col lg:flex-row items-start justify-center gap-20 max-w-6xl mx-auto">
+
+          {/* Left: Creator Profile Sidebar */}
+          <div className="w-full lg:w-[40%] flex flex-col gap-12">
+            <div className="relative inline-block w-fit group">
+              <div className="w-56 h-56 rounded-full border-4 border-white shadow-2xl overflow-hidden relative">
+                {creator.avatar_url ? (
+                  <img src={creator.avatar_url} alt={creator.display_name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                ) : (
+                  <div className="w-full h-full bg-primary/20 flex items-center justify-center text-4xl font-bold text-primary">
+                    {creator.display_name?.[0].toUpperCase()}
+                  </div>
+                )}
+              </div>
+              <div className="absolute bottom-6 right-0 bg-[#FF4B4B] text-white px-4 py-1.5 rounded-full flex items-center gap-2 border-4 border-[#F1F9F9] shadow-lg animate-pulse uppercase text-xs font-bold leading-none">
+                <span className="w-2.5 h-2.5 bg-white rounded-full"></span>
+                LIVE
+              </div>
+            </div>
+
+            <div>
+              <h1 className="font-header text-6xl md:text-8xl text-primary leading-tight mb-6">
+                {creator.display_name}
+              </h1>
+              <p className="text-xl text-slate-500 leading-relaxed max-w-md">
+                {creator.bio || "Building the future of decentralized entertainment. Direct support, direct impact."}
+              </p>
+            </div>
+
+            <div className="space-y-6">
+              <h3 className="text-xs uppercase tracking-[0.2em] font-black text-slate-400">RECENT DROPS</h3>
+              <div className="space-y-4">
+                {recentTips.length > 0 ? recentTips.map((tip, i) => (
+                  <div key={tip.id} className="flex gap-4 items-center">
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/5">
+                      <Sparkles className="w-4 h-4 text-primary" />
                     </div>
-                  )}
-                  <div>
-                    <CardTitle className="text-2xl">
-                      {creator?.display_name || 'Creator'}
-                    </CardTitle>
-                    <CardDescription>
-                      {activeStream ? (
-                        <span className="flex items-center gap-2">
-                          <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
-                          <span className="font-medium text-red-600">Live</span> on {activeStream.platform}
-                        </span>
-                      ) : (
-                        <span className="flex items-center gap-2">
-                          <span className="w-2 h-2 bg-gray-400 rounded-full"></span>
-                          <span className="text-muted-foreground">Offline • Tips go directly to wallet</span>
-                        </span>
+                    <p className="text-slate-600 font-medium">
+                      <span className="font-bold text-slate-900">{tip.viewer?.display_name || 'anon_user'}</span> dropped {tip.amount_eth} ETH
+                    </p>
+                  </div>
+                )) : (
+                  <p className="text-slate-400 italic">No tips yet. Be the first!</p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Right: Main Tip Card */}
+          <div className="w-full lg:w-[55%]">
+            <Card className="rounded-[40px] border-none shadow-[0_32px_80px_rgba(0,0,0,0.06)] bg-white/90 backdrop-blur-xl p-8 md:p-12">
+              <CardContent className="p-0 flex flex-col gap-10">
+                <div>
+                  <h2 className="text-4xl font-bold text-slate-900 mb-2">Send Tip</h2>
+                  <p className="text-lg text-slate-500 font-medium">Support the stream with your favorite token</p>
+                </div>
+
+                <div className="space-y-3">
+                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest">AMOUNT</label>
+                  <div className="bg-[#F1F9F9]/50 rounded-[30px] p-6 border-2 border-primary/5 focus-within:border-primary/20 transition-all">
+                    <div className="flex items-center gap-2">
+                      <span className="text-4xl md:text-6xl font-black text-primary/40 leading-none">$</span>
+                      <Input
+                        type="number"
+                        value={amount}
+                        onChange={(e) => setAmount(e.target.value)}
+                        placeholder="0.00"
+                        className="border-none bg-transparent p-0 text-4xl md:text-6xl font-black text-primary focus-visible:ring-0 h-auto placeholder:text-primary/20"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-3">
+                  {['1', '50', '100', '2000'].map((val) => (
+                    <button
+                      key={val}
+                      onClick={() => setAmount(val)}
+                      className={cn(
+                        "px-8 py-4 rounded-full border-2 font-bold transition-all hover:scale-105 active:scale-95",
+                        amount === val
+                          ? "bg-primary text-white border-primary shadow-lg shadow-primary/20"
+                          : "bg-white text-slate-600 border-slate-100 hover:border-primary/30"
                       )}
-                    </CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-            </Card>
-
-            {/* Tip Input */}
-            <Card className="mb-6">
-              <CardHeader>
-                <CardTitle>Send a Tip</CardTitle>
-                <CardDescription>
-                  Support {creator?.display_name || 'this creator'} with a tip
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <label htmlFor="amount" className="text-sm font-medium">
-                    Amount (ETH)
-                  </label>
-                  <Input
-                    id="amount"
-                    type="number"
-                    step="0.0001"
-                    min="0"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    placeholder="0.0000"
-                    disabled={!isAuthenticated || !creator || tipState === 'pending'}
-                  />
-                </div>
-                {!isAuthenticated ? (
-                  <div className="space-y-2">
-                    {!isConnected ? (
-                      <WalletConnect />
-                    ) : (
-                      <Button
-                        onClick={handleLogin}
-                        className="w-full"
-                        disabled={isLoggingIn}
-                      >
-                        {isLoggingIn ? 'Connecting...' : 'Connect wallet to tip'}
-                      </Button>
-                    )}
-                    <p className="text-sm text-muted-foreground text-center">
-                      {!isConnected ? 'Connect your wallet to start' : 'Sign a message to verify your wallet'}
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    <Button
-                      onClick={handleTip}
-                      disabled={tipState === 'pending' || !creator || !amount}
-                      className="w-full"
                     >
-                      {tipState === 'pending' ? 'Processing...' : `Tip ${creator?.display_name || 'Creator'}`}
-                    </Button>
-                    <p className="text-xs text-muted-foreground text-center">
-                      Signed in as {user?.walletAddress.slice(0, 6)}...{user?.walletAddress.slice(-4)}
-                    </p>
+                      ${val}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="space-y-4">
+                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest">CURRENCY</label>
+                  <div className="flex flex-wrap gap-3">
+                    {[
+                      { id: 'USDC', label: 'USDC', icon: '💎' },
+                      { id: 'SOL', label: 'SOL', icon: '💠' },
+                      { id: 'ETH', label: 'ETH', icon: '🏛️' },
+                    ].map((cur) => (
+                      <button
+                        key={cur.id}
+                        disabled={cur.id !== 'ETH'}
+                        onClick={() => setCurrency(cur.id as any)}
+                        className={cn(
+                          "px-6 py-4 rounded-[28px] border-2 flex items-center gap-3 font-bold transition-all relative overflow-hidden",
+                          currency === cur.id
+                            ? "bg-primary text-white border-primary shadow-xl shadow-primary/30"
+                            : "bg-white text-slate-600 border-slate-100 opacity-60 hover:opacity-100",
+                          cur.id !== 'ETH' && "cursor-not-allowed grayscale"
+                        )}
+                      >
+                        <span className="text-xl">{cur.icon}</span>
+                        {cur.label}
+                        {cur.id !== 'ETH' && <div className="absolute inset-0 bg-slate-900/5 flex items-center justify-center"></div>}
+                      </button>
+                    ))}
                   </div>
-                )}
+                </div>
+
+                <Button
+                  onClick={handleTip}
+                  disabled={tipState === 'pending' || !amount}
+                  className="w-full h-24 rounded-[32px] bg-primary hover:bg-primary/90 text-white text-2xl font-black shadow-2xl shadow-primary/40 flex items-center justify-center gap-4 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  {tipState === 'pending' ? (
+                    <div className="flex items-center gap-3">
+                      <div className="w-6 h-6 border-4 border-white/30 border-t-white rounded-full animate-spin" />
+                      PROCESSING...
+                    </div>
+                  ) : (
+                    <>
+                      <Sparkles className="w-8 h-8" />
+                      Send Tip
+                    </>
+                  )}
+                </Button>
+
+                <p className="text-center text-sm font-bold text-slate-400">
+                  Transactions are processed instantly on-chain. Gas fees apply.
+                </p>
               </CardContent>
             </Card>
 
-            {/* Recent Tips */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Recent Tips</CardTitle>
-                <CardDescription>Latest tips from viewers</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {recentTips.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-4">
-                    No tips yet. Be the first!
-                  </p>
-                ) : (
-                  <div className="space-y-2">
-                    {recentTips.map((tip) => {
-                      const viewerName = tip.viewer?.display_name;
-                      const viewerAddress = tip.viewer?.wallet_address || '';
-                      const addressDisplay = viewerName || `${viewerAddress.slice(0, 6)}...${viewerAddress.slice(-4)}`;
-
-                      return (
-                        <div
-                          key={tip.id}
-                          className="flex items-center justify-between p-3 border rounded-md bg-white"
-                        >
-                          <div>
-                            <p className="font-medium">{addressDisplay}</p>
-                            <p className="text-sm text-muted-foreground">
-                              {formatDistanceToNow(new Date(tip.created_at), { addSuffix: true })}
-                            </p>
-                          </div>
-                          <div className="text-right">
-                            <p className="font-bold text-primary">{tip.amount_eth} ETH</p>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <div className="mt-12 flex justify-center gap-12">
+              <div className="flex items-center gap-2 text-slate-400 font-bold text-sm">
+                <ShieldCheck className="w-5 h-5" />
+                Non-custodial
+              </div>
+              <div className="flex items-center gap-2 text-slate-400 font-bold text-sm">
+                <LockIcon className="w-5 h-5" />
+                Encrypted
+              </div>
+            </div>
           </div>
         </div>
       </main>
@@ -438,6 +387,6 @@ export default function TipPage() {
         creatorName={creator?.display_name || 'creator'}
         txHash={successTxHash}
       />
-    </>
+    </div>
   );
 }
