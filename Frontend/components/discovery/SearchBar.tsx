@@ -75,11 +75,6 @@ export function SearchBar({ variant = 'default' }: SearchBarProps) {
                     }}
                     className={`pl-12 border-none bg-transparent focus-visible:ring-0 ${variant === 'hero' ? 'h-14 text-lg' : 'h-12'}`}
                 />
-                {variant === 'hero' && (
-                    <div className="absolute right-0 top-1/2 -translate-y-1/2 pr-4 flex items-center">
-                        <span className="text-xs font-semibold px-2 py-1 rounded bg-slate-100 text-primary uppercase tracking-wider">Advanced</span>
-                    </div>
-                )}
             </div>
 
             {showResults && (

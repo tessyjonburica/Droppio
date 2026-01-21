@@ -3,9 +3,21 @@
 import { SearchBar } from '@/components/discovery/SearchBar';
 import { Button } from '@/components/ui/button';
 import { WalletConnect } from '@/components/auth/wallet-connect';
+import { useRef } from 'react';
 import Link from 'next/link';
 
 export function HeroSection() {
+    const searchRef = useRef<HTMLDivElement>(null);
+
+    const scrollToSearch = () => {
+        searchRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Optional: focus the input after scrolling
+        const input = searchRef.current?.querySelector('input');
+        if (input) {
+            setTimeout(() => input.focus(), 500);
+        }
+    };
+
     return (
         <section className="relative px-4 pt-12 pb-24 md:pt-20 md:pb-32 overflow-hidden">
             {/* Background with Teal Gradient and Dot Pattern */}
@@ -14,7 +26,7 @@ export function HeroSection() {
             </div>
 
             <div className="container relative z-10 mx-auto max-w-6xl rounded-[40px] px-8 py-16 md:px-16 md:py-24 bg-transparent text-white">
-                <div className="flex flex-col md:flex-row items-start justify-between gap-12">
+                <div className="flex flex-col md:flex-row items-center justify-between gap-12">
                     {/* Left Content */}
                     <div className="max-w-2xl">
                         <div className="flex items-center gap-1 mb-8">
@@ -33,15 +45,14 @@ export function HeroSection() {
                     </div>
 
                     {/* Right Action Buttons */}
-                    <div className="flex flex-col gap-4 min-w-[240px]">
-                        <Link href="/discovery">
-                            <Button
-                                size="lg"
-                                className="w-full bg-white text-primary hover:bg-white/90 text-lg font-semibold rounded-2xl h-14"
-                            >
-                                Explore Creators
-                            </Button>
-                        </Link>
+                    <div className="flex flex-col gap-4 min-w-[240px] md:mt-12">
+                        <Button
+                            size="lg"
+                            className="w-full bg-white text-primary hover:bg-white/90 text-lg font-semibold rounded-2xl h-14"
+                            onClick={scrollToSearch}
+                        >
+                            Search Creators
+                        </Button>
                         <div className="w-full">
                             <WalletConnect
                                 className="w-full bg-white/20 backdrop-blur-md border-white/30 text-white hover:bg-white/30 text-lg font-semibold rounded-2xl h-14"
@@ -51,7 +62,7 @@ export function HeroSection() {
                 </div>
 
                 {/* Search Bar - Positioned overlapping the bottom */}
-                <div className="absolute -bottom-7 left-1/2 -translate-x-1/2 w-full max-w-3xl px-4">
+                <div className="absolute -bottom-7 left-1/2 -translate-x-1/2 w-full max-w-3xl px-4" ref={searchRef}>
                     <div className="bg-white rounded-full shadow-2xl p-1 flex items-center pr-6">
                         <div className="flex-1">
                             <SearchBar variant="hero" />
