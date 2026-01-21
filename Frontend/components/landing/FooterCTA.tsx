@@ -21,7 +21,7 @@ export function FooterCTA() {
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-24">
                     <Button
                         size="lg"
-                        className="bg-primary hover:bg-primary/90 text-white text-lg border border-white/50 font-semibold px-12 py-7 rounded-2xl h-auto"
+                        className="bg-primary hover:bg-primary/90 text-white text-xl font-bold border border-white/50 px-12 py-8 rounded-full h-16"
                         onClick={() => {
                             const element = document.getElementById('search-section');
                             if (element) {
@@ -38,7 +38,7 @@ export function FooterCTA() {
                         <Button
                             size="lg"
                             variant="outline"
-                            className="bg-primary-accent/20 border-white/50 text-white hover:bg-white/10 text-xl font-bold px-12 py-8 rounded-full h-16"
+                            className="bg-primary-accent/20 border border-white/50 text-white hover:bg-white/50 text-xl font-bold px-12 py-8 rounded-full h-16"
                         >
                             Become a Creator
                         </Button>

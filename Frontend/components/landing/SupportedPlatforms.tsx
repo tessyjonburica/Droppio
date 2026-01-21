@@ -18,7 +18,7 @@ const platforms = [
 
 export function SupportedPlatforms() {
     return (
-        <section className="py-16 bg-[#F8FAFB] border-t border-gray-50">
+        <section className="py-20 bg-[#F8FAFB] border-t border-gray-50">
             <div className="container mx-auto px-4">
                 <div className="text-center mb-10">
                     <span className="text-slate-400 font-bold tracking-[0.2em] text-xs uppercase">SUPPORTED PLATFORMS</span>

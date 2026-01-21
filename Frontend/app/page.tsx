@@ -12,16 +12,14 @@ export default function Home() {
       {/* Hero Section */}
       <HeroSection />
 
+      {/* Social Proof: Supported Platforms */}
+      <SupportedPlatforms />
+
       {/* How It Works Section */}
-      <div className="mt-12">
-        <HowItWorks />
-      </div>
+      <HowItWorks />
 
       {/* Creator Economy Section */}
       <CreatorEconomy />
-
-      {/* Supported Platforms Section */}
-      <SupportedPlatforms />
 
       {/* Footer CTA Section (Includes Footer) */}
       <FooterCTA />

@@ -8,12 +8,13 @@ const DiscordIcon = () => (
 
 export function CreatorEconomy() {
     return (
-        <section className="py-24 bg-[#F8FAFB] overflow-hidden min-h-[600px] flex items-center">
+        <section className="py-32 bg-[#F8FAFB] overflow-hidden min-h-[600px] flex items-center">
             <div className="container mx-auto px-4">
                 <div className="flex flex-col lg:flex-row items-center gap-16 max-w-7xl mx-auto">
                     {/* Left: Content */}
                     <div className="w-full lg:w-[40%] text-[#0D2121]">
-                        <h2 className="text-5xl md:text-7xl font-bold leading-[1.1] mb-12 tracking-tight">
+                        <span className="text-primary font-bold tracking-widest text-xs uppercase mb-3 block">CREATOR ECONOMY</span>
+                        <h2 className="text-5xl md:text-7xl font-header font-bold leading-[1.1] mb-12 tracking-tight">
                             Join the community of TOP creators
                         </h2>
                         <a

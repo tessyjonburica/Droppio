@@ -63,10 +63,10 @@ export function WalletConnect({
 
   if (isConnected && address) {
     return (
-      <div className={cn("flex items-center gap-4", className)}>
-        <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/5 rounded-full border border-primary/20">
-          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-          <span className="text-xs font-mono font-medium text-primary">
+      <div className={cn("flex items-center gap-3", className)}>
+        <div className="flex items-center gap-2 px-3 py-2 bg-current/[0.08] rounded-full border border-current/10 backdrop-blur-sm">
+          <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
+          <span className="text-xs font-mono font-bold tracking-tight text-current whitespace-nowrap">
             {address.slice(0, 6)}...{address.slice(-4)}
           </span>
         </div>
@@ -74,11 +74,11 @@ export function WalletConnect({
           <Button
             variant="ghost"
             onClick={() => disconnect()}
-            size="sm"
-            className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+            size="icon"
+            className="w-10 h-10 rounded-full text-current/60 hover:text-destructive hover:bg-destructive/10 transition-colors"
+            title="Disconnect Wallet"
           >
-            <LogOut className="h-4 w-4 mr-2" />
-            Disconnect
+            <LogOut className="h-4 w-4" />
           </Button>
         )}
       </div>
