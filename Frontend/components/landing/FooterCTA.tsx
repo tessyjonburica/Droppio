@@ -26,7 +26,6 @@ export function FooterCTA() {
                             const element = document.getElementById('search-section');
                             if (element) {
                                 element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                // Optional: focus search input
                                 setTimeout(() => {
                                     element.querySelector('input')?.focus();
                                 }, 600);
