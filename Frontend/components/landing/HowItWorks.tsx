@@ -54,7 +54,7 @@ export function HowItWorks() {
                     {(() => {
                         const Step1Icon = steps[0].icon;
                         return (
-                            <div className="md:col-span-2 bg-white p-10 rounded-[40px] shadow-[0_4px_20px_rgba(0,0,0,0.02)] border border-white relative overflow-hidden group">
+                            <div className="md:col-span-2 bg-white p-10 rounded-[40px] shadow-[0_4px_20px_rgba(0,0,0,0.02)] border border-gray-300 relative overflow-hidden group">
                                 <div className={`${steps[0].iconBg} ${steps[0].iconColor} w-10 h-10 rounded-full flex items-center justify-center mb-10`}>
                                     <Step1Icon size={20} />
                                 </div>
@@ -67,7 +67,7 @@ export function HowItWorks() {
                     {(() => {
                         const Step2Icon = steps[1].icon;
                         return (
-                            <div className="bg-white p-10 rounded-[40px] shadow-[0_4px_20px_rgba(0,0,0,0.02)] border border-white relative overflow-hidden group">
+                            <div className="bg-white p-10 rounded-[40px] shadow-[0_4px_20px_rgba(0,0,0,0.02)] border border-gray-300 relative overflow-hidden group">
                                 <div className={`${steps[1].iconBg} ${steps[1].iconColor} w-10 h-10 rounded-full flex items-center justify-center mb-10`}>
                                     <Step2Icon size={20} />
                                 </div>
@@ -81,7 +81,7 @@ export function HowItWorks() {
                     {steps.slice(2).map((step, index) => {
                         const StepIcon = step.icon;
                         return (
-                            <div key={index} className="bg-white p-10 rounded-[40px] shadow-[0_4px_20px_rgba(0,0,0,0.02)] border border-white relative overflow-hidden group">
+                            <div key={index} className="bg-white p-10 rounded-[40px] shadow-[0_4px_20px_rgba(0,0,0,0.02)] border border-gray-300 relative overflow-hidden group">
                                 <div className={`${step.iconBg} ${step.iconColor} w-10 h-10 rounded-full flex items-center justify-center mb-10`}>
                                     <StepIcon size={20} />
                                 </div>

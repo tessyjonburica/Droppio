@@ -18,7 +18,7 @@ import { useAuthStore } from '@/store/auth-store';
 import { authService } from '@/services/auth.service';
 import { useTip } from '@/hooks/useTip';
 import { SuccessModal } from '@/components/tip/SuccessModal';
-import { Sparkles, Wallet, ShieldCheck, LockIcon } from 'lucide-react';
+import { Sparkles, ShieldCheck, LockIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 
@@ -32,7 +32,6 @@ export default function TipPage() {
   const [isLoadingCreator, setIsLoadingCreator] = useState(true);
   const [activeStream, setActiveStream] = useState<any>(null);
   const [amount, setAmount] = useState('');
-  const [currency, setCurrency] = useState<'ETH' | 'SOL' | 'USDC'>('ETH');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [recentTips, setRecentTips] = useState<TipResponse[]>([]);
 
@@ -161,7 +160,7 @@ export default function TipPage() {
 
     const tipAmount = parseFloat(amount);
     if (isNaN(tipAmount) || tipAmount <= 0) {
-      toast({ title: 'Invalid amount', description: 'Please enter a valid amount', variant: 'destructive' });
+      toast({ title: 'Invalid amount', description: 'Please enter a valid positive amount', variant: 'destructive' });
       return;
     }
 
@@ -188,190 +187,167 @@ export default function TipPage() {
     resetTipState();
   };
 
-  if (isLoadingCreator) return <div className="min-h-screen flex items-center justify-center bg-soft-mint text-primary-dark">Loading your favorite creator...</div>;
-  if (!creator) return <div className="min-h-screen flex items-center justify-center bg-soft-mint text-primary-dark">Creator not found</div>;
+  if (isLoadingCreator) return <div className="min-h-screen flex items-center justify-center bg-soft-mint text-primary-dark font-sans">Loading your favorite creator...</div>;
+  if (!creator) return <div className="min-h-screen flex items-center justify-center bg-soft-mint text-primary-dark font-sans">Creator not found</div>;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#F1F9F9] to-[#E8F2F2] relative overflow-hidden font-sans text-slate-900">
+    <div className="min-h-screen bg-gradient-to-br from-[#F1F9F9] to-[#E8F2F2] relative overflow-hidden font-sans text-slate-900 flex flex-col">
       {/* Background Decorative Elements */}
       <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-primary/5 rounded-full blur-3xl -mr-64 -mt-64" />
       <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-primary/5 rounded-full blur-3xl -ml-32 -mb-32" />
 
-      {/* Top Header Placeholder / Wallet Connect */}
-      <div className="container mx-auto px-6 py-8 flex justify-between items-center relative z-20">
+      {/* Simplified Header */}
+      <div className="container mx-auto px-6 py-4 flex justify-start items-center relative z-20">
         <Link href="/">
-          <span className="font-header text-3xl text-primary">droppio.</span>
+          <span className="font-header text-2xl text-primary font-bold">droppio.</span>
         </Link>
-
-        {isConnected && address ? (
-          <div className="bg-white/80 backdrop-blur-md rounded-full px-6 py-3 shadow-sm border border-white/50 flex flex-col items-end">
-            <span className="text-[10px] uppercase tracking-widest font-bold text-primary/60 mb-0.5">CONNECTED WALLET</span>
-            <div className="flex items-center gap-3">
-              <span className="font-mono font-bold text-primary text-lg">
-                {address.slice(0, 6)}...{address.slice(-4)}
-              </span>
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20">
-                <Wallet className="w-5 h-5 text-primary" />
-              </div>
-            </div>
-          </div>
-        ) : (
-          <WalletConnect className="bg-primary text-white rounded-full px-8 py-4 shadow-xl hover:bg-primary/90 transition-all font-bold" />
-        )}
       </div>
 
-      <main className="container mx-auto px-6 py-12 relative z-10">
-        <div className="flex flex-col lg:flex-row items-start justify-center gap-20 max-w-6xl mx-auto">
-
-          {/* Left: Creator Profile Sidebar */}
-          <div className="w-full lg:w-[40%] flex flex-col gap-12">
-            <div className="relative inline-block w-fit group">
-              <div className="w-56 h-56 rounded-full border-4 border-white shadow-2xl overflow-hidden relative">
-                {creator.avatar_url ? (
-                  <img src={creator.avatar_url ?? undefined} alt={creator.display_name ?? ""} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                ) : (
-                  <div className="w-full h-full bg-primary/20 flex items-center justify-center text-4xl font-bold text-primary">
-                    {creator.display_name?.[0].toUpperCase() ?? "C"}
-                  </div>
-                )}
-              </div>
-              <div className="absolute bottom-6 right-0 bg-[#FF4B4B] text-white px-4 py-1.5 rounded-full flex items-center gap-2 border-4 border-[#F1F9F9] shadow-lg animate-pulse uppercase text-xs font-bold leading-none">
-                <span className="w-2.5 h-2.5 bg-white rounded-full"></span>
-                LIVE
-              </div>
+      <main className="container mx-auto px-6 flex-1 flex items-center justify-center relative z-10 py-4">
+        {/* Left: Creator Profile Sidebar - More Compact */}
+        <div className="w-full lg:w-[40%] flex flex-col gap-6 lg:gap-8 items-center lg:items-start text-center lg:text-left">
+          <div className="relative inline-block w-fit group">
+            <div className="w-32 h-32 lg:w-40 lg:h-40 rounded-full border-4 border-white shadow-xl overflow-hidden relative">
+              {creator.avatar_url ? (
+                <img src={creator.avatar_url ?? undefined} alt={creator.display_name ?? ""} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+              ) : (
+                <div className="w-full h-full bg-primary/20 flex items-center justify-center text-4xl font-bold text-primary">
+                  {creator.display_name?.[0].toUpperCase() ?? "C"}
+                </div>
+              )}
             </div>
-
-            <div>
-              <h1 className="font-header text-6xl md:text-8xl text-primary leading-tight mb-6">
-                {creator.display_name}
-              </h1>
-              <p className="text-xl text-slate-500 leading-relaxed max-w-md">
-                {creator.bio || "Building the future of decentralized entertainment. Direct support, direct impact."}
-              </p>
-            </div>
-
-            <div className="space-y-6">
-              <h3 className="text-xs uppercase tracking-[0.2em] font-black text-slate-400">RECENT DROPS</h3>
-              <div className="space-y-4">
-                {recentTips.length > 0 ? recentTips.map((tip) => (
-                  <div key={tip.id} className="flex gap-4 items-center">
-                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/5">
-                      <Sparkles className="w-4 h-4 text-primary" />
-                    </div>
-                    <p className="text-slate-600 font-medium">
-                      <span className="font-bold text-slate-900">{tip.viewer?.display_name || 'anon_user'}</span> dropped {tip.amount_eth} ETH
-                    </p>
-                  </div>
-                )) : (
-                  <p className="text-slate-400 italic">No tips yet. Be the first!</p>
-                )}
-              </div>
+            <div className="absolute bottom-2 right-0 bg-[#FF4B4B] text-white px-3 py-1 rounded-full flex items-center gap-1.5 border-2 border-[#F1F9F9] shadow-lg animate-pulse uppercase text-[10px] font-bold leading-none">
+              <span className="w-2 h-2 bg-white rounded-full"></span>
+              LIVE
             </div>
           </div>
 
-          {/* Right: Main Tip Card */}
-          <div className="w-full lg:w-[55%]">
-            <Card className="rounded-[40px] border-none shadow-[0_32px_80px_rgba(0,0,0,0.06)] bg-white/90 backdrop-blur-xl p-8 md:p-12">
-              <CardContent className="p-0 flex flex-col gap-10">
-                <div>
-                  <h2 className="text-4xl font-bold text-slate-900 mb-2">Send Tip</h2>
-                  <p className="text-lg text-slate-500 font-medium">Support the stream with your favorite token</p>
-                </div>
+          <div className="space-y-4">
+            <h1 className="text-4xl lg:text-5xl font-black text-primary leading-tight tracking-tight">
+              {creator.display_name}
+            </h1>
+            <p className="text-base lg:text-lg text-slate-500 leading-relaxed max-w-sm">
+              {creator.bio || "Building the future of decentralized entertainment. Direct support, direct impact."}
+            </p>
+          </div>
 
-                <div className="space-y-3">
-                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest">AMOUNT</label>
-                  <div className="bg-[#F1F9F9]/50 rounded-[30px] p-6 border-2 border-primary/5 focus-within:border-primary/20 transition-all">
-                    <div className="flex items-center gap-2">
-                      <span className="text-4xl md:text-6xl font-black text-primary/40 leading-none">$</span>
-                      <Input
-                        type="number"
-                        value={amount}
-                        onChange={(e) => setAmount(e.target.value)}
-                        placeholder="0.00"
-                        className="border-none bg-transparent p-0 text-4xl md:text-6xl font-black text-primary focus-visible:ring-0 h-auto placeholder:text-primary/20"
-                      />
-                    </div>
+          <div className="space-y-4 w-full">
+            <h3 className="text-[10px] uppercase tracking-[0.2em] font-black text-slate-400">RECENT DROPS</h3>
+            <div className="space-y-3">
+              {recentTips.length > 0 ? recentTips.map((tip) => (
+                <div key={tip.id} className="flex gap-3 justify-center lg:justify-start items-center">
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center border border-primary/5">
+                    <Sparkles className="w-3.5 h-3.5 text-primary" />
+                  </div>
+                  <p className="text-sm text-slate-600 font-medium">
+                    <span className="font-bold text-slate-900">{tip.viewer?.display_name || 'anon_user'}</span> dropped {tip.amount_eth} ETH
+                  </p>
+                </div>
+              )) : (
+                <p className="text-slate-400 text-sm italic">No tips yet. Be the first!</p>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Right: Main Tip Card - Compact & Vertical Alignment */}
+        <div className="w-full lg:w-[50%] max-w-md">
+          <Card className="rounded-[40px] border-none shadow-[0_32px_80px_rgba(0,0,0,0.06)] bg-white/90 backdrop-blur-xl p-8 lg:p-10">
+            <CardContent className="p-0 flex flex-col gap-8">
+              <div>
+                <h2 className="text-2xl font-bold text-slate-900 mb-1">Send Tip</h2>
+                <p className="text-sm text-slate-500 font-medium">Support the stream with ETH</p>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">AMOUNT</label>
+                <div className="bg-[#F1F9F9]/50 rounded-[24px] p-4 lg:p-5 border-2 border-primary/5 focus-within:border-primary/20 transition-all">
+                  <div className="flex items-center gap-2">
+                    <span className="text-3xl lg:text-4xl font-black text-primary/40 leading-none">$</span>
+                    <Input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={amount}
+                      onChange={(e) => setAmount(e.target.value)}
+                      placeholder="0.00"
+                      className="border-none bg-transparent p-0 text-3xl lg:text-4xl font-black text-primary focus-visible:ring-0 h-auto placeholder:text-primary/20"
+                    />
                   </div>
                 </div>
+              </div>
 
-                <div className="flex flex-wrap gap-3">
-                  {['1', '50', '100', '2000'].map((val) => (
-                    <button
-                      key={val}
-                      onClick={() => setAmount(val)}
-                      className={cn(
-                        "px-8 py-4 rounded-full border-2 font-bold transition-all hover:scale-105 active:scale-95",
-                        amount === val
-                          ? "bg-primary text-white border-primary shadow-lg shadow-primary/20"
-                          : "bg-white text-slate-600 border-slate-100 hover:border-primary/30"
-                      )}
-                    >
-                      ${val}
-                    </button>
-                  ))}
-                </div>
+              <div className="flex flex-wrap gap-2 lg:gap-3">
+                {['1', '50', '100', '500'].map((val) => (
+                  <button
+                    key={val}
+                    onClick={() => setAmount(val)}
+                    className={cn(
+                      "px-6 py-3 rounded-full border-2 text-sm font-bold transition-all hover:scale-105 active:scale-95",
+                      amount === val
+                        ? "bg-primary text-white border-primary shadow-lg shadow-primary/20"
+                        : "bg-white text-slate-600 border-slate-100 hover:border-primary/30"
+                    )}
+                  >
+                    ${val}
+                  </button>
+                ))}
+              </div>
 
-                <div className="space-y-4">
-                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest">CURRENCY</label>
-                  <div className="flex flex-wrap gap-3">
-                    {[
-                      { id: 'USDC', label: 'USDC', icon: '💎' },
-                      { id: 'SOL', label: 'SOL', icon: '💠' },
-                      { id: 'ETH', label: 'ETH', icon: '🏛️' },
-                    ].map((cur) => (
-                      <button
-                        key={cur.id}
-                        disabled={cur.id !== 'ETH'}
-                        onClick={() => setCurrency(cur.id as any)}
-                        className={cn(
-                          "px-6 py-4 rounded-[28px] border-2 flex items-center gap-3 font-bold transition-all relative overflow-hidden",
-                          currency === cur.id
-                            ? "bg-primary text-white border-primary shadow-xl shadow-primary/30"
-                            : "bg-white text-slate-600 border-slate-100 opacity-60 hover:opacity-100",
-                          cur.id !== 'ETH' && "cursor-not-allowed grayscale"
-                        )}
-                      >
-                        <span className="text-xl">{cur.icon}</span>
-                        {cur.label}
-                        {cur.id !== 'ETH' && <div className="absolute inset-0 bg-slate-900/5 flex items-center justify-center"></div>}
-                      </button>
-                    ))}
+              <div className="w-full">
+                {!isConnected ? (
+                  <div className="relative group">
+                    <WalletConnect className="w-full h-16 lg:h-20 rounded-[24px] bg-primary hover:bg-primary/90 text-white text-lg lg:text-xl font-black shadow-xl shadow-primary/30 transition-all hover:scale-[1.02] active:scale-[0.98]" />
                   </div>
-                </div>
+                ) : !isAuthenticated ? (
+                  <Button
+                    onClick={handleLogin}
+                    disabled={isLoggingIn}
+                    className="w-full h-16 lg:h-20 rounded-[24px] bg-primary hover:bg-primary/90 text-white text-lg lg:text-xl font-black shadow-xl shadow-primary/30 transition-all animate-pulse"
+                  >
+                    {isLoggingIn ? "VERIFYING..." : "VERIFY WALLET TO TIP"}
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={handleTip}
+                    disabled={tipState === 'pending' || !amount}
+                    className="w-full h-16 lg:h-20 rounded-[24px] bg-primary hover:bg-primary/90 text-white text-lg lg:text-xl font-black shadow-xl shadow-primary/30 flex items-center justify-center gap-3 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                  >
+                    {tipState === 'pending' ? (
+                      <div className="flex items-center gap-2">
+                        <div className="w-5 h-5 border-4 border-white/30 border-t-white rounded-full animate-spin" />
+                        PROCESSING...
+                      </div>
+                    ) : (
+                      <>
+                        <Sparkles className="w-6 h-6" />
+                        Send Tip
+                      </>
+                    )}
+                  </Button>
+                )}
 
-                <Button
-                  onClick={handleTip}
-                  disabled={tipState === 'pending' || !amount}
-                  className="w-full h-24 rounded-[32px] bg-primary hover:bg-primary/90 text-white text-2xl font-black shadow-2xl shadow-primary/40 flex items-center justify-center gap-4 transition-all hover:scale-[1.02] active:scale-[0.98]"
-                >
-                  {tipState === 'pending' ? (
-                    <div className="flex items-center gap-3">
-                      <div className="w-6 h-6 border-4 border-white/30 border-t-white rounded-full animate-spin" />
-                      PROCESSING...
-                    </div>
-                  ) : (
-                    <>
-                      <Sparkles className="w-8 h-8" />
-                      Send Tip
-                    </>
-                  )}
-                </Button>
-
-                <p className="text-center text-sm font-bold text-slate-400">
-                  Transactions are processed instantly on-chain. Gas fees apply.
-                </p>
-              </CardContent>
-            </Card>
-
-            <div className="mt-12 flex justify-center gap-12">
-              <div className="flex items-center gap-2 text-slate-400 font-bold text-sm">
-                <ShieldCheck className="w-5 h-5" />
-                Non-custodial
+                {isConnected && (
+                  <p className="text-center text-[10px] font-bold text-primary/40 mt-3 uppercase tracking-tighter">
+                    Connected: {address?.slice(0, 6)}...{address?.slice(-4)}
+                  </p>
+                )}
               </div>
-              <div className="flex items-center gap-2 text-slate-400 font-bold text-sm">
-                <LockIcon className="w-5 h-5" />
-                Encrypted
-              </div>
+
+              <p className="text-center text-[10px] font-bold text-slate-400">
+                Transactions are processed instantly on-chain. Gas fees apply.
+              </p>
+            </CardContent>
+          </Card>
+
+          <div className="mt-8 lg:mt-10 flex justify-center gap-8">
+            <div className="flex items-center gap-2 text-slate-400 font-bold text-[10px] lg:text-xs">
+              <ShieldCheck className="w-4 h-4" />
+              Non-custodial
+            </div>
+            <div className="flex items-center gap-2 text-slate-400 font-bold text-[10px] lg:text-xs">
+              <LockIcon className="w-4 h-4" />
+              Encrypted
             </div>
           </div>
         </div>
