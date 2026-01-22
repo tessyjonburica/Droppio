@@ -6,7 +6,7 @@ import { BrowserProvider, formatEther } from 'ethers';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { getDroppioContractWithSigner, getDroppioContract } from '@/lib/ethers/contract';
-import { Wallet, Loader2 } from 'lucide-react';
+import { Wallet, Loader2, ArrowRight, LayoutGrid } from 'lucide-react';
 
 export function WithdrawButton() {
     const { address, isConnected } = useAccount();
@@ -32,12 +32,9 @@ export function WithdrawButton() {
                 const contractBalance = await contract.balances(address);
                 setBalance(formatEther(contractBalance));
             } catch (error: any) {
-                // If the error is due to No internet or RPC error, log silently
                 if (!window.navigator.onLine) return;
-
-                // Specific check for CALL_EXCEPTION or revert which might happen if contract is not on this network
                 if (error.code === 'CALL_EXCEPTION' || error.message?.includes('missing revert data')) {
-                    console.warn('Contract balance check failed: Contract may not be deployed on this network or address is invalid.');
+                    console.warn('Contract balance check failed');
                 } else {
                     console.error('Failed to check balance:', error?.message || error);
                 }
@@ -47,20 +44,12 @@ export function WithdrawButton() {
         };
 
         checkBalance();
-        const interval = setInterval(checkBalance, 10000); // Check every 10 seconds
-
+        const interval = setInterval(checkBalance, 10000);
         return () => clearInterval(interval);
     }, [address, isConnected]);
 
     const handleWithdraw = async () => {
-        if (!isConnected || !address || !walletClient) {
-            toast({
-                title: 'Wallet not connected',
-                description: 'Please connect your wallet to withdraw',
-                variant: 'destructive',
-            });
-            return;
-        }
+        if (!isConnected || !address || !walletClient) return;
 
         if (parseFloat(balance) <= 0) {
             toast({
@@ -72,96 +61,42 @@ export function WithdrawButton() {
         }
 
         setIsLoading(true);
-
         try {
             const provider = new BrowserProvider(walletClient.transport);
             const contract = await getDroppioContractWithSigner(provider);
-
-            // Call withdraw function
             const tx = await contract.withdraw();
-
-            toast({
-                title: 'Withdrawal initiated',
-                description: 'Waiting for confirmation...',
-            });
-
-            // Wait for confirmation
+            toast({ title: 'Withdrawal initiated', description: 'Waiting for confirmation...' });
             await tx.wait(1);
+            toast({ title: 'Withdrawal successful!', description: `${balance} ETH transferred to your wallet` });
 
-            toast({
-                title: 'Withdrawal successful!',
-                description: `${balance} ETH has been transferred to your wallet`,
-            });
-
-            // Immediately check balance again to update UI
-            try {
-                const provider = new BrowserProvider(window.ethereum!);
-                const contract = getDroppioContract(provider);
-                const contractBalance = await contract.balances(address);
-                setBalance(formatEther(contractBalance));
-            } catch (error) {
-                console.error('Failed to refresh balance:', error);
-                setBalance('0');
-            }
+            // Refresh balance
+            const contractBalance = await (getDroppioContract(new BrowserProvider(window.ethereum!))).balances(address);
+            setBalance(formatEther(contractBalance));
         } catch (error: any) {
             console.error('Withdrawal error:', error);
-
-            let errorMessage = 'Failed to withdraw. Please try again.';
-            if (error.message?.includes('user rejected')) {
-                errorMessage = 'Transaction rejected by user';
-            } else if (error.message?.includes('no balance')) {
-                errorMessage = 'No balance to withdraw';
-            }
-
-            toast({
-                title: 'Withdrawal failed',
-                description: errorMessage,
-                variant: 'destructive',
-            });
+            const errorMessage = error.message?.includes('user rejected') ? 'Transaction rejected' : 'Withdrawal failed';
+            toast({ title: 'Withdrawal failed', description: errorMessage, variant: 'destructive' });
         } finally {
             setIsLoading(false);
         }
     };
 
-    if (!isConnected) {
-        return null;
-    }
+    if (!isConnected) return null;
 
     const hasBalance = parseFloat(balance) > 0;
 
     return (
-        <div className="space-y-2">
-            <div className="flex items-center justify-between">
-                <div>
-                    <p className="text-sm font-medium">Contract Balance</p>
-                    <p className="text-xs text-muted-foreground">
-                        {isChecking ? 'Checking...' : `${balance} ETH available`}
-                    </p>
-                </div>
-                <Button
-                    onClick={handleWithdraw}
-                    disabled={isLoading || !hasBalance || isChecking}
-                    variant={hasBalance ? 'default' : 'secondary'}
-                    className="gap-2"
-                >
-                    {isLoading ? (
-                        <>
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            Withdrawing...
-                        </>
-                    ) : (
-                        <>
-                            <Wallet className="h-4 w-4" />
-                            Withdraw
-                        </>
-                    )}
-                </Button>
-            </div>
-            {hasBalance && (
-                <p className="text-xs text-muted-foreground">
-                    Click withdraw to transfer your accumulated tips to your wallet
-                </p>
+        <Button
+            onClick={handleWithdraw}
+            disabled={isLoading || !hasBalance || isChecking}
+            className="h-14 sm:h-16 px-8 rounded-2xl bg-primary hover:bg-primary/90 text-white font-black text-xl shadow-lg shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98] gap-3 flex items-center"
+        >
+            {isLoading ? (
+                <Loader2 className="h-6 w-6 animate-spin" />
+            ) : (
+                <LayoutGrid className="h-6 w-6" />
             )}
-        </div>
+            Withdraw
+        </Button>
     );
 }

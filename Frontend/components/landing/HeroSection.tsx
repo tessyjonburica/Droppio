@@ -4,6 +4,7 @@ import { SearchBar } from '@/components/discovery/SearchBar';
 import { Button } from '@/components/ui/button';
 import { WalletConnect } from '@/components/auth/wallet-connect';
 import { useRef } from 'react';
+import Link from 'next/link';
 
 export function HeroSection() {
     const searchRef = useRef<HTMLDivElement>(null);
@@ -45,13 +46,14 @@ export function HeroSection() {
 
                     {/* Right Action Buttons */}
                     <div className="flex flex-col gap-4 min-w-[240px] md:mt-12">
-                        <Button
-                            size="lg"
-                            className="w-full bg-white text-primary hover:bg-white/90 text-lg font-semibold rounded-2xl h-14"
-                            onClick={scrollToSearch}
-                        >
-                            Search Creators
-                        </Button>
+                        <Link href="/creator-login" className="w-full">
+                            <Button
+                                size="lg"
+                                className="w-full bg-white text-primary hover:bg-white/90 text-lg font-semibold rounded-2xl h-14"
+                            >
+                                Become a Creator
+                            </Button>
+                        </Link>
                         <div className="w-full">
                             <WalletConnect
                                 className="w-full bg-white/20 backdrop-blur-md border-white/30 text-white hover:bg-white/30 text-lg font-semibold rounded-2xl h-14"

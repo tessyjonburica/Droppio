@@ -2,6 +2,7 @@
 
 import { DashboardSidebar } from '@/components/layout/dashboard-sidebar';
 import { Header } from '@/components/layout/header';
+import { Logo } from '@/components/brand/logo';
 import { useState } from 'react';
 import { Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -19,7 +20,7 @@ export default function DashboardLayout({
             <Header />
             <div className="flex-1 flex overflow-hidden">
                 {/* Desktop Sidebar */}
-                <aside className="hidden md:block w-64 flex-shrink-0">
+                <aside className="hidden md:block w-72 flex-shrink-0">
                     <DashboardSidebar />
                 </aside>
 
@@ -38,7 +39,7 @@ export default function DashboardLayout({
                 )}>
                     <div className="flex flex-col h-full">
                         <div className="p-4 border-b flex items-center justify-between">
-                            <span className="font-logo text-primary text-xl">droppio</span>
+                            <Logo className="text-xl" />
                             <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(false)}>
                                 <X className="h-6 w-6" />
                             </Button>
@@ -48,7 +49,7 @@ export default function DashboardLayout({
                 </aside>
 
                 {/* Main Content */}
-                <main className="flex-1 overflow-y-auto relative">
+                <main className="flex-1 overflow-y-auto bg-[#F8FAFB] relative custom-scrollbar">
                     {/* Mobile Header for Sidebar Toggle */}
                     <div className="md:hidden flex items-center p-4 bg-white border-b sticky top-0 z-30">
                         <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(true)}>
@@ -57,7 +58,7 @@ export default function DashboardLayout({
                         <span className="ml-4 font-semibold text-lg">Dashboard</span>
                     </div>
 
-                    <div className="p-6 md:p-8 max-w-7xl mx-auto w-full">
+                    <div className="p-6 md:p-10 lg:p-14 w-full h-full max-w-[1600px] mx-auto">
                         {children}
                     </div>
                 </main>

@@ -4,11 +4,11 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import {
-    LayoutDashboard,
+    LayoutGrid,
     Settings,
     Video,
-    History,
-    ExternalLink
+    Clock,
+    BookOpen
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -21,16 +21,16 @@ export function DashboardSidebar({ className }: SidebarProps) {
     const routes = [
         {
             label: 'Overview',
-            icon: LayoutDashboard,
+            icon: LayoutGrid,
             href: '/dashboard',
             active: pathname === '/dashboard',
         },
         {
             label: 'Stream History',
-            icon: History,
+            icon: Clock,
             href: '/dashboard/history',
             active: pathname === '/dashboard/history',
-            disabled: true,
+            soon: true,
         },
         {
             label: 'Overlay Settings',
@@ -47,42 +47,43 @@ export function DashboardSidebar({ className }: SidebarProps) {
     ];
 
     return (
-        <div className={cn("pb-12 h-full flex flex-col bg-white border-r", className)}>
-            <div className="space-y-4 py-6">
-                <div className="px-3 py-2 flex-1">
-                    <div className="space-y-1">
-                        {routes.map((route) => (
-                            <Link
-                                key={route.href}
-                                href={route.disabled ? '#' : route.href}
-                                className={cn(
-                                    "text-sm group flex p-3 w-full justify-start font-medium cursor-pointer hover:text-primary hover:bg-primary/5 rounded-lg transition",
-                                    route.active ? "text-primary bg-primary/5" : "text-muted-foreground",
-                                    route.disabled && "opacity-50 cursor-not-allowed"
-                                )}
-                            >
-                                <div className="flex items-center flex-1">
-                                    <route.icon className={cn("h-5 w-5 mr-3", route.active ? "text-primary" : "text-muted-foreground")} />
-                                    {route.label}
-                                    {route.disabled && <span className="ml-2 text-[10px] bg-muted px-1.5 py-0.5 rounded text-muted-foreground">Soon</span>}
-                                </div>
-                            </Link>
-                        ))}
-                    </div>
+        <div className={cn("h-full flex flex-col bg-white border-r border-slate-100", className)}>
+            <div className="flex-1 py-8 px-4">
+                <div className="space-y-2">
+                    {routes.map((route) => (
+                        <Link
+                            key={route.href}
+                            href={route.soon ? '#' : route.href}
+                            className={cn(
+                                "group flex items-center gap-3 px-4 py-3.5 rounded-2xl text-sm font-semibold transition-all duration-200",
+                                route.active
+                                    ? "bg-[#F1F9F9] text-primary"
+                                    : "text-slate-500 hover:bg-slate-50 hover:text-slate-900",
+                                route.soon && "opacity-60 cursor-not-allowed"
+                            )}
+                        >
+                            <route.icon className={cn("h-5 w-5", route.active ? "text-primary" : "text-slate-400 group-hover:text-slate-600")} />
+                            <span className="flex-1">{route.label}</span>
+                            {route.soon && (
+                                <span className="text-[9px] font-black uppercase tracking-widest bg-slate-100 text-slate-400 px-2 py-1 rounded-full leading-none">
+                                    SOON
+                                </span>
+                            )}
+                        </Link>
+                    ))}
                 </div>
             </div>
-            <div className="mt-auto px-6 py-4 border-t">
-                <div className="text-xs text-muted-foreground mb-4">RESOURCES</div>
-                <div className="space-y-2">
-                    <a
-                        href="https://docs.droppio.xyz"
-                        target="_blank"
-                        className="text-sm text-muted-foreground hover:text-primary flex items-center gap-2"
-                    >
-                        <ExternalLink className="h-4 w-4" />
-                        Documentation
-                    </a>
-                </div>
+
+            <div className="mt-auto p-6 space-y-4">
+                <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-4">RESOURCES</div>
+                <Link
+                    href="https://docs.droppio.xyz"
+                    target="_blank"
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-slate-500 hover:text-primary transition-colors"
+                >
+                    <BookOpen className="h-5 w-5 text-slate-400" />
+                    Documentation
+                </Link>
             </div>
         </div>
     );
