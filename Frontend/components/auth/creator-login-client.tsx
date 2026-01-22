@@ -1,25 +1,27 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAccount, useSignMessage } from 'wagmi';
+import { useAccount, useSignMessage, useDisconnect } from 'wagmi';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-// import { Logo } from '@/components/brand/logo';
+import { Card, CardContent } from '@/components/ui/card';
 import dynamic from 'next/dynamic';
 import { authService } from '@/services/auth.service';
 import { generateMessage } from '@/utils/signature';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-
 import { checkServerHealth } from '@/services/health-check';
+import Link from 'next/link';
+import { ArrowRight, RefreshCcw, CreditCard } from 'lucide-react';
+
 
 const WalletConnect = dynamic(() => import('@/components/auth/wallet-connect').then(mod => ({ default: mod.WalletConnect })), {
   ssr: false,
-  loading: () => <div className="flex gap-2"><button className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2" disabled>Loading...</button></div>
+  loading: () => <Button disabled variant="outline" className="w-full h-14 rounded-2xl">Loading Wallet...</Button>
 });
 
 export default function CreatorLoginClient() {
   const { address, isConnected } = useAccount();
+  const { disconnect } = useDisconnect();
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
@@ -30,12 +32,10 @@ export default function CreatorLoginClient() {
     setMounted(true);
   }, []);
 
-  // Check server health on mount
   useEffect(() => {
     const checkHealth = async () => {
       const health = await checkServerHealth();
       setServerStatus({ isHealthy: health.isHealthy, message: health.message });
-
       if (!health.isHealthy) {
         toast({
           title: 'Server Connection Issue',
@@ -44,7 +44,6 @@ export default function CreatorLoginClient() {
         });
       }
     };
-
     checkHealth();
   }, [toast]);
 
@@ -59,7 +58,6 @@ export default function CreatorLoginClient() {
       return;
     }
 
-    // Check server health before attempting login
     const health = await checkServerHealth();
     if (!health.isHealthy) {
       toast({
@@ -72,18 +70,16 @@ export default function CreatorLoginClient() {
     }
 
     setIsLoading(true);
-
     try {
       const timestamp = Date.now();
       const message = generateMessage(address, timestamp);
-
       const signature = await signMessageAsync({ message });
 
       const response = await authService.login({
         walletAddress: address,
         signature,
         message,
-        role: 'creator', // Always creator for this page
+        role: 'creator',
       });
 
       toast({
@@ -91,7 +87,6 @@ export default function CreatorLoginClient() {
         description: 'Welcome to Droppio!',
       });
 
-      // Check if user needs onboarding
       if (!response.user.displayName) {
         router.push('/onboard');
       } else {
@@ -99,30 +94,17 @@ export default function CreatorLoginClient() {
       }
     } catch (error: any) {
       console.error('Login error:', error);
-
-      // Extract error message - handle both Error objects and Axios errors
       let errorMessage = 'Failed to login';
-
       if (error instanceof Error) {
-        // Standard Error object
         errorMessage = error.message;
       } else if (error?.cause?.code === 4001 || error?.code === 4001) {
-        // User rejected the signature request
         errorMessage = 'Login cancelled';
         toast({
           title: 'Login cancelled',
           description: 'You rejected the signature request',
-          variant: 'default',
         });
         return;
-      } else if (error.response?.data) {
-        // Axios error with response
-        errorMessage = error.response.data.error || error.response.data.message || error.message || 'Failed to login';
-      } else if (error.message) {
-        // Axios error without response (network error)
-        errorMessage = error.message;
       }
-
       toast({
         title: 'Login failed',
         description: errorMessage,
@@ -133,70 +115,131 @@ export default function CreatorLoginClient() {
     }
   };
 
+  if (!mounted) return null;
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-soft-mint">
-      <div className="w-full max-w-md space-y-8 p-8">
-        <div className="text-center">
-          <h1 className="font-header text-6xl text-primary mb-2">Creator Login</h1>
-          <p className="text-muted-foreground font-body">
-            Connect your wallet to access your creator dashboard
-          </p>
+    <div className="min-h-screen flex flex-col md:flex-row bg-[#F8FAFB] font-body">
+      {/* Left Column: Branding & Info */}
+      <div className="hidden md:flex md:w-[55%] bg-[#E6F4F1] relative overflow-hidden flex-col p-12 lg:p-20 justify-start">
+        <Link href="/">
+          <span className="font-header text-4xl text-primary font-bold">droppio.</span>
+        </Link>
+
+        {/* Tagline */}
+        <div className="max-w-md relative z-10 mt-32 lg:mt-48">
+          <div className="w-20 h-1 bg-primary/20 mb-8 rounded-full" />
+          <h2 className="text-4xl lg:text-5xl font-bold text-primary/40 leading-[1.2] tracking-tight">
+            The future of creator tipping, decentralised.
+          </h2>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Get Started</CardTitle>
-            <CardDescription>
-              Sign in with your wallet to start receiving tips
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {serverStatus && !serverStatus.isHealthy && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-sm text-red-800 font-medium mb-1">⚠️ Server Connection Issue</p>
-                <p className="text-xs text-red-600">{serverStatus.message}</p>
-                <p className="text-xs text-red-600 mt-2">
-                  Make sure the backend server is running: <code className="bg-red-100 px-1 rounded">cd Backend && npm run dev</code>
-                </p>
-              </div>
+        {/* Decorative elements - subtle corner gradient */}
+        <div className="absolute -bottom-32 -left-32 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
+      </div>
+
+      {/* Right Column: Sign-in Form */}
+      <div className="flex-1 bg-white flex flex-col p-8 md:p-12 lg:p-20 justify-center relative overflow-hidden">
+        {/* Mobile Header */}
+        <div className="md:hidden absolute top-8 left-8">
+          <Link href="/">
+            <span className="font-header text-3xl text-primary font-bold">droppio.</span>
+          </Link>
+        </div>
+
+        <div className="max-w-md w-full mx-auto space-y-10 relative z-10">
+          <div className="space-y-4">
+            <h1 className="font-header text-5xl text-primary font-bold">Creator Sign-in</h1>
+            <p className="text-slate-500 font-medium leading-relaxed max-w-[340px]">
+              Connect your wallet to access your creator dashboard and manage your tips.
+            </p>
+          </div>
+
+          <div className="space-y-6">
+            {isConnected && (
+              <Card className="rounded-[2.5rem] border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] bg-white overflow-hidden group transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.06)] animate-in fade-in slide-in-from-bottom-2 duration-500">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-[10px] uppercase tracking-[0.2em] font-black text-slate-400">CONNECTED WALLET</span>
+                    <span className="flex items-center gap-1.5 px-3 py-1 bg-teal-50 text-[#11BDB7] rounded-full text-[10px] font-black uppercase ring-1 ring-[#11BDB7]/20">
+                      <span className="w-1.5 h-1.5 bg-[#11BDB7] rounded-full animate-pulse" />
+                      ACTIVE
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center border border-slate-100 group-hover:bg-primary/5 group-hover:border-primary/20 transition-colors">
+                      <CreditCard className="w-5 h-5 text-slate-400 group-hover:text-primary transition-colors" />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="font-mono text-lg font-bold text-slate-900 leading-none">
+                        {address?.slice(0, 6)}...{address?.slice(-4)}
+                      </p>
+                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Main Network</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             )}
 
-            {!mounted ? (
-              // Loading/Skeleton state to prevent hydration mismatch
-              <div className="flex flex-col items-center justify-center space-y-4 py-8">
-                <div className="h-10 w-48 bg-muted animate-pulse rounded" />
-                <div className="h-4 w-64 bg-muted animate-pulse rounded" />
-              </div>
-            ) : !isConnected ? (
-              <>
-                <WalletConnect />
-                <p className="text-sm text-muted-foreground text-center">
-                  Connect your wallet to continue
-                </p>
-              </>
-            ) : (
-              <>
-                <div className="p-4 bg-soft-mint rounded-lg">
-                  <p className="text-sm text-muted-foreground mb-1">Connected as:</p>
-                  <p className="font-mono text-sm font-medium">
-                    {address?.slice(0, 6)}...{address?.slice(-4)}
-                  </p>
+            <div className="space-y-4">
+              {!isConnected ? (
+                <div className="relative group">
+                  <WalletConnect
+                    className="w-full h-14 lg:h-16 rounded-[2rem] bg-primary hover:bg-primary/90 text-white text-base lg:text-lg font-black shadow-xl shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                  />
                 </div>
-                <Button onClick={handleLogin} disabled={isLoading || (serverStatus?.isHealthy === false)} className="w-full">
-                  {isLoading ? 'Signing in...' : 'Sign In as Creator'}
+              ) : (
+                <Button
+                  onClick={handleLogin}
+                  disabled={isLoading || (serverStatus?.isHealthy === false)}
+                  className="w-full h-14 lg:h-16 rounded-[2rem] bg-primary hover:bg-primary/90 text-white text-base lg:text-lg font-black shadow-xl shadow-primary/20 flex items-center justify-center gap-3 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  {isLoading ? (
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 border-4 border-white/30 border-t-white rounded-full animate-spin" />
+                      SIGNING IN...
+                    </div>
+                  ) : (
+                    <>
+                      Sign in as a creator
+                      <ArrowRight className="w-5 h-5" />
+                    </>
+                  )}
                 </Button>
-              </>
-            )}
-          </CardContent>
-        </Card>
+              )}
 
-        <div className="text-center text-sm text-muted-foreground">
-          <p>
-            Just want to tip creators?{' '}
-            <a href="/" className="text-primary hover:underline">
-              Browse creators
-            </a>
-          </p>
+              {isConnected && (
+                <div className="flex justify-center">
+                  <Button
+                    variant="ghost"
+                    onClick={() => disconnect()}
+                    className="text-slate-400 hover:text-primary font-bold text-[10px] gap-2 py-0 h-auto uppercase tracking-widest"
+                  >
+                    <RefreshCcw className="w-3.5 h-3.5" />
+                    Switch wallet
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="pt-8 border-t border-slate-50">
+            <div className="text-center space-y-2">
+              <p className="text-slate-400 font-bold text-[10px] uppercase tracking-widest">Just want to tip creators?</p>
+              <Link href="/" className="text-primary hover:underline font-black text-sm block">
+                Browse Creators
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* Decorative element in bottom right */}
+        <div className="absolute -bottom-10 -right-10 opacity-5 pointer-events-none select-none">
+          <div className="grid grid-cols-4 gap-4">
+            {[...Array(16)].map((_, i) => (
+              <div key={i} className="w-4 h-4 rounded-full bg-slate-900" />
+            ))}
+          </div>
         </div>
       </div>
     </div>

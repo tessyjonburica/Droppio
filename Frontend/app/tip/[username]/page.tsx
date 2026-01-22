@@ -92,11 +92,6 @@ export default function TipPage() {
     }
   };
 
-  useEffect(() => {
-    if (isConnected && address && !isAuthenticated && !isLoggingIn) {
-      handleLogin();
-    }
-  }, [isConnected, address, isAuthenticated, isLoggingIn]);
 
   const loadActiveStream = useCallback(async () => {
     if (!creator?.id) return null;
@@ -216,10 +211,6 @@ export default function TipPage() {
                 </div>
               )}
             </div>
-            <div className="absolute bottom-2 right-0 bg-[#FF4B4B] text-white px-3 py-1 rounded-full flex items-center gap-1.5 border-2 border-[#F1F9F9] shadow-lg animate-pulse uppercase text-[10px] font-bold leading-none">
-              <span className="w-2 h-2 bg-white rounded-full"></span>
-              LIVE
-            </div>
           </div>
 
           <div className="space-y-4">
@@ -297,13 +288,13 @@ export default function TipPage() {
               <div className="w-full">
                 {!isConnected ? (
                   <div className="relative group">
-                    <WalletConnect className="w-full h-16 lg:h-20 rounded-[24px] bg-primary hover:bg-primary/90 text-white text-lg lg:text-xl font-black shadow-xl shadow-primary/30 transition-all hover:scale-[1.02] active:scale-[0.98]" />
+                    <WalletConnect className="w-full h-14 lg:h-16 rounded-[20px] bg-primary hover:bg-primary/90 text-white text-base lg:text-lg font-black shadow-xl shadow-primary/30 transition-all hover:scale-[1.02] active:scale-[0.98]" />
                   </div>
                 ) : !isAuthenticated ? (
                   <Button
                     onClick={handleLogin}
                     disabled={isLoggingIn}
-                    className="w-full h-16 lg:h-20 rounded-[24px] bg-primary hover:bg-primary/90 text-white text-lg lg:text-xl font-black shadow-xl shadow-primary/30 transition-all animate-pulse"
+                    className="w-full h-14 lg:h-16 rounded-[20px] bg-primary hover:bg-primary/90 text-white text-base lg:text-lg font-black shadow-xl shadow-primary/30 transition-all"
                   >
                     {isLoggingIn ? "VERIFYING..." : "VERIFY WALLET TO TIP"}
                   </Button>
@@ -311,16 +302,16 @@ export default function TipPage() {
                   <Button
                     onClick={handleTip}
                     disabled={tipState === 'pending' || !amount}
-                    className="w-full h-16 lg:h-20 rounded-[24px] bg-primary hover:bg-primary/90 text-white text-lg lg:text-xl font-black shadow-xl shadow-primary/30 flex items-center justify-center gap-3 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                    className="w-full h-14 lg:h-16 rounded-[20px] bg-primary hover:bg-primary/90 text-white text-base lg:text-lg font-black shadow-xl shadow-primary/30 flex items-center justify-center gap-3 transition-all hover:scale-[1.02] active:scale-[0.98]"
                   >
                     {tipState === 'pending' ? (
                       <div className="flex items-center gap-2">
-                        <div className="w-5 h-5 border-4 border-white/30 border-t-white rounded-full animate-spin" />
+                        <div className="w-4 h-4 border-4 border-white/30 border-t-white rounded-full animate-spin" />
                         PROCESSING...
                       </div>
                     ) : (
                       <>
-                        <Sparkles className="w-6 h-6" />
+                        <Sparkles className="w-5 h-5" />
                         Send Tip
                       </>
                     )}
