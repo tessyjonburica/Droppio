@@ -8,13 +8,13 @@ const DiscordIcon = () => (
 
 export function CreatorEconomy() {
     return (
-        <section className="py-32 bg-[#F8FAFB] overflow-hidden min-h-[600px] flex items-center">
+        <section className="py-24 md:py-32 bg-[#F8FAFB] overflow-hidden min-h-[600px] flex items-center">
             <div className="container mx-auto px-4">
                 <div className="flex flex-col lg:flex-row items-center gap-16 max-w-7xl mx-auto">
                     {/* Left: Content */}
-                    <div className="w-full lg:w-[40%] text-[#0D2121]">
+                    <div className="w-full lg:w-[40%] text-[#0D2121] text-center lg:text-left">
                         <span className="text-primary font-bold tracking-widest text-xs uppercase mb-3 block">CREATOR ECONOMY</span>
-                        <h2 className="text-5xl md:text-7xl font-header font-bold leading-[1.1] mb-12 tracking-tight">
+                        <h2 className="text-4xl md:text-5xl lg:text-7xl font-header font-bold leading-[1.1] mb-8 md:mb-12 tracking-tight">
                             Join the community of TOP creators
                         </h2>
                         <a
@@ -32,7 +32,7 @@ export function CreatorEconomy() {
                     <div className="w-full lg:w-[60%] relative">
                         <div className="flex gap-4 md:gap-6 items-start">
                             {/* Column 1 */}
-                            <div className="flex flex-col gap-4 md:gap-6 mt-12 w-1/3">
+                            <div className="flex flex-col gap-4 md:gap-6 mt-12 w-1/2 md:w-1/3">
                                 <div className="aspect-square bg-white rounded-[40px] overflow-hidden shadow-lg border border-white">
                                     <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=creator1" alt="Creator" className="w-full h-full object-cover" />
                                 </div>
@@ -49,7 +49,7 @@ export function CreatorEconomy() {
                             </div>
 
                             {/* Column 2 */}
-                            <div className="flex flex-col gap-4 md:gap-6 w-1/3">
+                            <div className="flex flex-col gap-4 md:gap-6 w-1/2 md:w-1/3">
                                 <div className="aspect-square bg-[#F1F5F9] rounded-[40px] overflow-hidden shadow-2xl border border-white">
                                     <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=ape1" alt="Creator" className="w-full h-full object-cover" />
                                 </div>
@@ -61,8 +61,8 @@ export function CreatorEconomy() {
                                 </div>
                             </div>
 
-                            {/* Column 3 */}
-                            <div className="flex flex-col gap-4 md:gap-6 mt-24 w-1/3">
+                            {/* Column 3 - Hidden on Mobile */}
+                            <div className="hidden md:flex flex-col gap-4 md:gap-6 mt-24 md:w-1/3">
                                 <div className="aspect-square bg-[#A5B4FC] rounded-[40px] overflow-hidden shadow-xl border border-white">
                                     <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=creator6" alt="Creator" className="w-full h-full object-cover" />
                                 </div>
