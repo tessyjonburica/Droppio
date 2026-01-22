@@ -198,7 +198,7 @@ export default function TipPage() {
         </Link>
       </div>
 
-      <main className="container mx-auto px-6 flex-1 flex items-center justify-center relative z-10 py-4">
+      <main className="container mx-auto px-6 flex-1 flex flex-col lg:flex-row items-center justify-center relative z-10 py-8 lg:py-4 gap-12 lg:gap-0">
         {/* Left: Creator Profile Sidebar - More Compact */}
         <div className="w-full lg:w-[40%] flex flex-col gap-6 lg:gap-8 items-center lg:items-start text-center lg:text-left">
           <div className="relative inline-block w-fit group">
@@ -252,35 +252,35 @@ export default function TipPage() {
 
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">AMOUNT</label>
-                <div className="bg-[#F1F9F9]/50 rounded-[24px] p-4 lg:p-5 border-2 border-primary/5 focus-within:border-primary/20 transition-all">
+                <div className="bg-[#F1F9F9]/50 rounded-[20px] p-4 lg:p-5 border-2 border-primary/5 focus-within:border-primary/20 transition-all">
                   <div className="flex items-center gap-2">
-                    <span className="text-3xl lg:text-4xl font-black text-primary/40 leading-none">$</span>
+                    <span className="text-xl lg:text-2xl font-black text-primary/40 leading-none">ETH</span>
                     <Input
                       type="number"
                       min="0"
-                      step="0.01"
+                      step="0.001"
                       value={amount}
                       onChange={(e) => setAmount(e.target.value)}
-                      placeholder="0.00"
-                      className="border-none bg-transparent p-0 text-3xl lg:text-4xl font-black text-primary focus-visible:ring-0 h-auto placeholder:text-primary/20"
+                      placeholder="0.000"
+                      className="border-none bg-transparent p-0 text-2xl lg:text-3xl font-black text-primary focus-visible:ring-0 h-auto placeholder:text-primary/20"
                     />
                   </div>
                 </div>
               </div>
 
               <div className="flex flex-wrap gap-2 lg:gap-3">
-                {['1', '50', '100', '500'].map((val) => (
+                {['0.001', '0.01', '0.05', '0.1'].map((val) => (
                   <button
                     key={val}
                     onClick={() => setAmount(val)}
                     className={cn(
-                      "px-6 py-3 rounded-full border-2 text-sm font-bold transition-all hover:scale-105 active:scale-95",
+                      "px-5 py-2.5 rounded-full border-2 text-xs font-bold transition-all hover:scale-105 active:scale-95",
                       amount === val
                         ? "bg-primary text-white border-primary shadow-lg shadow-primary/20"
                         : "bg-white text-slate-600 border-slate-100 hover:border-primary/30"
                     )}
                   >
-                    ${val}
+                    {val} ETH
                   </button>
                 ))}
               </div>

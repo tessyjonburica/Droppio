@@ -6,18 +6,19 @@ import { useAuthStore } from '@/store/auth-store';
 import { useRouter } from 'next/navigation';
 
 export function useAuth() {
-  const { address, isConnected } = useAccount();
+  const { address, isConnected, status } = useAccount();
   const { user, isAuthenticated, clearAuth } = useAuthStore();
   const router = useRouter();
 
   // Handle manual wallet disconnection
   useEffect(() => {
-    if (!isConnected && isAuthenticated) {
+    // Only clear auth if we are truly disconnected (not just connecting or reconnecting)
+    if (status === 'disconnected' && isAuthenticated) {
       // Wallet was disconnected manually - clear session and redirect
       clearAuth();
       router.push('/');
     }
-  }, [isConnected, isAuthenticated, clearAuth, router]);
+  }, [status, isAuthenticated, clearAuth, router]);
 
   // Handle wallet change
   useEffect(() => {
