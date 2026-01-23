@@ -3,21 +3,9 @@
 import { SearchBar } from '@/components/discovery/SearchBar';
 import { Button } from '@/components/ui/button';
 import { WalletConnect } from '@/components/auth/wallet-connect';
-import { useRef } from 'react';
 import Link from 'next/link';
 
 export function HeroSection() {
-    const searchRef = useRef<HTMLDivElement>(null);
-
-    const scrollToSearch = () => {
-        searchRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        // Optional: focus the input after scrolling
-        const input = searchRef.current?.querySelector('input');
-        if (input) {
-            setTimeout(() => input.focus(), 500);
-        }
-    };
-
     return (
         <section className="relative px-4 pt-12 pb-24 md:pt-20 md:pb-32 overflow-hidden">
             {/* Background with Teal Gradient and Dot Pattern */}
@@ -63,7 +51,7 @@ export function HeroSection() {
                 </div>
 
                 {/* Search Bar - Positioned overlapping the bottom */}
-                <div id="search-section" className="absolute -bottom-7 left-1/2 -translate-x-1/2 w-full max-w-3xl px-4" ref={searchRef}>
+                <div id="search-section" className="absolute -bottom-7 left-1/2 -translate-x-1/2 w-full max-w-3xl px-4">
                     <div className="bg-white rounded-full shadow-2xl p-1 flex items-center pr-6">
                         <div className="flex-1">
                             <SearchBar variant="hero" />
