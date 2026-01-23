@@ -6,7 +6,7 @@ import { BrowserProvider, formatEther } from 'ethers';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { getDroppioContractWithSigner, getDroppioContract } from '@/lib/ethers/contract';
-import { Wallet, Loader2, ArrowRight, LayoutGrid } from 'lucide-react';
+import { Loader2, ArrowRight, LayoutGrid } from 'lucide-react';
 
 export function WithdrawButton() {
     const { address, isConnected } = useAccount();
