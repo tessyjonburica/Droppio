@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/use-auth';
 import { streamService, Stream } from '@/services/stream.service';
@@ -13,11 +12,9 @@ import { useToast } from '@/hooks/use-toast';
 import {
   Copy,
   ExternalLink,
-  Wallet,
   TrendingUp,
   Video,
   Wifi,
-  WifiOff,
   Clock,
   Zap,
   User,
@@ -137,13 +134,13 @@ export default function DashboardPage() {
   // Fetch contract balance for the bottom section
   useEffect(() => {
     const fetchBalance = async () => {
-      if (!user?.walletAddress && !user?.wallet_address) return;
+      if (!user?.walletAddress) return;
       try {
         if (!window.ethereum) return;
         const { BrowserProvider, formatEther } = await import('ethers');
         const provider = new BrowserProvider(window.ethereum);
         const contract = getDroppioContract(provider);
-        const bal = await contract.balances(user.walletAddress || user.wallet_address);
+        const bal = await contract.balances(user.walletAddress);
         setContractBalance(formatEther(bal));
       } catch (error) {
         console.error('Failed to fetch contract balance:', error);
