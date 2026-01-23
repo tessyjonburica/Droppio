@@ -279,7 +279,6 @@ export default function DashboardPage() {
           consecutiveErrors++;
           if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
             console.error(`[Dashboard] Polling failed ${consecutiveErrors} times consecutively. Stopping polling.`);
-            // Don't clear interval, but log the issue
           }
         } else {
           // Reset error counter on success
