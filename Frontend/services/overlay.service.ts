@@ -61,5 +61,15 @@ export const overlayService = {
       throw error;
     }
   },
+
+  async getOverlayToken(streamerId: string): Promise<string> {
+    try {
+      const response = await api.get<{ token: string }>(`/overlay/${streamerId}/token`);
+      return response.data.token;
+    } catch (error: any) {
+      console.error('[Overlay Service] Failed to get overlay token:', error);
+      throw error;
+    }
+  },
 };
 

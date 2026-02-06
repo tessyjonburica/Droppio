@@ -56,4 +56,18 @@ router.patch(
   overlayController.updateConfig
 );
 
+// GET /overlay/:streamer_id/token
+// Get or create overlay token for OBS
+router.get(
+  '/:streamer_id/token',
+  authenticateToken,
+  requireRole(['creator']),
+  validate(z.object({
+    params: z.object({
+      streamer_id: z.string().uuid('Invalid streamer ID'),
+    }),
+  })),
+  overlayController.getOverlayToken
+);
+
 export default router;

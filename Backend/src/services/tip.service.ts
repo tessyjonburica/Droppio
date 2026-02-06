@@ -95,45 +95,9 @@ export const tipService = {
     }
     logger.info(`[TipService] Tip created successfully: ${tip.id}`);
 
-    // Broadcast immediately (Source of Truth #1: API confirmation)
-    // This allows the dashboard to update instantly without waiting for the blockchain listener
-    logger.info(`[TipService] Broadcasting immediate tip event for: ${tip.id}`);
-
-    // Verification: specific log to check if tip is visible in DB query immediately
-    try {
-      const check = await tipModel.findById(tip.id);
-      logger.info(`[TipService] DB Verification - Tip found immediately: ${!!check}`);
-    } catch (e) {
-      logger.warn(`[TipService] DB Verification failed: ${e}`);
-    }
-
-    const amountEth = input.amountEth;
-
-    try {
-      // 1. Send to Streamer Dashboard
-      streamerWsHelpers.notifyTipReceived(creatorId, {
-        tipId: tip.id,
-        amount: amountEth,
-        viewer: {
-          id: viewer.id,
-          walletAddress: viewer.wallet_address,
-          displayName: viewer.display_name,
-        },
-      });
-
-      // 2. Send to Overlay
-      overlayWsHelpers.notifyTipEvent(creatorId, {
-        tipId: tip.id,
-        amount: amountEth,
-        viewer: {
-          displayName: viewer.display_name,
-          walletAddress: viewer.wallet_address,
-        },
-      });
-    } catch (wsError) {
-      // Don't fail the request if WS broadcast fails, just log it
-      logger.error('[TipService] Failed to broadcast immediate tip event:', wsError);
-    }
+    // Note: WebSocket broadcasts are handled by the BlockchainListener (single source of truth)
+    // This prevents duplicate alerts on the overlay and dashboard
+    logger.info(`[TipService] Tip created successfully: ${tip.id}. Blockchain listener will handle notifications.`);
 
     return {
       ...tip,

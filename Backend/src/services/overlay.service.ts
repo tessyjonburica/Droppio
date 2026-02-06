@@ -1,6 +1,8 @@
 import { Overlay, UpdateOverlayInput } from '../types/overlay';
 import { overlayModel } from '../models/overlay.model';
 import { userModel } from '../models/user.model';
+import { overlayTokenModel } from '../models/overlay-token.model';
+import crypto from 'crypto';
 
 export const overlayService = {
   getConfig: async (creatorId: string): Promise<Overlay> => {
@@ -47,5 +49,28 @@ export const overlayService = {
     }
 
     return updatedOverlay;
+  },
+
+  getOrCreateOverlayToken: async (creatorId: string): Promise<string> => {
+    // Validate creator exists
+    const creator = await userModel.findById(creatorId);
+    if (!creator) {
+      throw new Error('Creator not found');
+    }
+
+    // Check if token already exists
+    let tokenRecord = await overlayTokenModel.findByCreatorId(creatorId);
+
+    if (tokenRecord) {
+      return tokenRecord.token;
+    }
+
+    // Generate new secure token (256-bit random token)
+    const token = crypto.randomBytes(32).toString('hex');
+
+    // Create token record
+    tokenRecord = await overlayTokenModel.create(creatorId, token);
+
+    return tokenRecord.token;
   },
 };

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/use-auth';
 import { streamService, Stream } from '@/services/stream.service';
 import { creatorService } from '@/services/creator.service';
+import { overlayService } from '@/services/overlay.service';
 import { useWebSocket, StreamerChannelEvent, ViewerChannelEvent, OverlayChannelEvent } from '@/hooks/use-websocket';
 import { useAuthStore } from '@/store/auth-store';
 import { useToast } from '@/hooks/use-toast';
@@ -52,16 +53,23 @@ export default function DashboardPage() {
     }
   }, [user?.id]);
 
-  const generateUrls = useCallback(() => {
+  const generateUrls = useCallback(async () => {
     if (!user?.id) return;
 
     // Base URL
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL ||
       (typeof window !== 'undefined' ? window.location.origin : 'https://droppio.xyz');
 
-    // Overlay URL
-    if (accessToken) {
-      setOverlayUrl(`${baseUrl}/overlay/${user.id}?token=${accessToken}`);
+    // Overlay URL - fetch long-lived token
+    try {
+      const overlayToken = await overlayService.getOverlayToken(user.id);
+      setOverlayUrl(`${baseUrl}/overlay/${user.id}?token=${overlayToken}`);
+    } catch (error) {
+      console.error('[Dashboard] Failed to fetch overlay token:', error);
+      // Fall back to access token for backward compatibility
+      if (accessToken) {
+        setOverlayUrl(`${baseUrl}/overlay/${user.id}?token=${accessToken}`);
+      }
     }
 
     // Tipping URL - uses display name

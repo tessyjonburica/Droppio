@@ -34,14 +34,43 @@ export const handleOverlayConnection = (ws: WebSocket, req: OverlayWebSocketRequ
   }
 
   let payload: JwtPayload | null = null;
+  let isOverlayToken = false;
+
+  // First, try to verify as overlay token (long-lived)
   try {
-    payload = verifyAccessToken(accessToken);
-    logger.debug(`Overlay token validated for creator ${creatorId}, wallet: ${payload.walletAddress}`);
-  } catch (tokenError) {
-    const errorMessage = tokenError instanceof Error ? tokenError.message : 'Unknown token error';
-    logger.warn(`Overlay connection rejected: Invalid token. CreatorId: ${creatorId}, Error: ${errorMessage}`);
-    ws.close(1008, 'Invalid token');
-    return;
+    const { overlayTokenModel } = await import('../models/overlay-token.model');
+    const tokenRecord = await overlayTokenModel.findByToken(accessToken);
+
+    if (tokenRecord && tokenRecord.creator_id === creatorId) {
+      isOverlayToken = true;
+      logger.info(`Overlay token validated for creator ${creatorId}`);
+
+      // Update last used timestamp
+      await overlayTokenModel.updateLastUsed(accessToken).catch(err => {
+        logger.warn('Failed to update overlay token last_used_at:', err);
+      });
+
+      // Create a pseudo-payload for overlay tokens
+      payload = {
+        walletAddress: 'overlay-token',
+        role: 'creator',
+      };
+    }
+  } catch (overlayTokenError) {
+    logger.debug('Not an overlay token, trying JWT verification');
+  }
+
+  // If not an overlay token, try standard JWT verification (backward compatibility)
+  if (!payload) {
+    try {
+      payload = verifyAccessToken(accessToken);
+      logger.debug(`Standard JWT validated for creator ${creatorId}, wallet: ${payload.walletAddress}`);
+    } catch (tokenError) {
+      const errorMessage = tokenError instanceof Error ? tokenError.message : 'Unknown token error';
+      logger.warn(`Overlay connection rejected: Invalid token. CreatorId: ${creatorId}, Error: ${errorMessage}`);
+      ws.close(1008, 'Invalid token');
+      return;
+    }
   }
 
 
