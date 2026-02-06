@@ -410,68 +410,72 @@ export default function DashboardPage() {
       <div className="grid gap-8 grid-cols-1 lg:grid-cols-3">
         {/* Left Column: Actions */}
         <div className="lg:col-span-2 space-y-8">
-          <div className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-sm space-y-6">
+          <div className="bg-white p-6 sm:p-8 rounded-[40px] border border-slate-100 shadow-sm space-y-6">
             <div className="flex items-center gap-3">
               <Copy className="h-5 w-5 text-primary" />
               <h3 className="text-xl font-bold text-primary-dark">Tipping Link</h3>
             </div>
             <p className="text-slate-500 text-sm -mt-2">Share this link with your audience to receive crypto tips</p>
 
-            <div className="flex gap-2">
-              <div className="flex-1 bg-slate-50/50 border border-slate-100 rounded-2xl p-4 flex items-center">
+            <div className="flex flex-wrap sm:flex-nowrap gap-2">
+              <div className="flex-1 min-w-0 bg-slate-50/50 border border-slate-100 rounded-2xl p-4 flex items-center">
                 <Input value={tippingUrl} readOnly className="border-none bg-transparent p-0 text-slate-600 focus-visible:ring-0 font-medium h-auto" />
               </div>
-              <Button onClick={() => copyToClipboard(tippingUrl, 'Tipping URL')} variant="outline" size="icon" className="h-14 w-14 rounded-2xl bg-white border-slate-100 hover:bg-[#F1F9F9] hover:border-primary/20 transition-all">
-                <Copy className="h-5 w-5 text-primary" />
-              </Button>
-              <Link href={tippingUrl} target="_blank">
-                <Button variant="outline" size="icon" className="h-14 w-14 rounded-2xl bg-white border-slate-100 hover:bg-[#F1F9F9] hover:border-primary/20 transition-all">
-                  <ExternalLink className="h-5 w-5 text-slate-400" />
+              <div className="flex gap-2">
+                <Button onClick={() => copyToClipboard(tippingUrl, 'Tipping URL')} variant="outline" size="icon" className="h-14 w-14 flex-shrink-0 rounded-2xl bg-white border-slate-100 hover:bg-[#F1F9F9] hover:border-primary/20 transition-all">
+                  <Copy className="h-5 w-5 text-primary" />
                 </Button>
-              </Link>
+                <Link href={tippingUrl} target="_blank">
+                  <Button variant="outline" size="icon" className="h-14 w-14 flex-shrink-0 rounded-2xl bg-white border-slate-100 hover:bg-[#F1F9F9] hover:border-primary/20 transition-all">
+                    <ExternalLink className="h-5 w-5 text-slate-400" />
+                  </Button>
+                </Link>
+              </div>
             </div>
             <p className="text-[10px] text-slate-400 italic">
               Pro tip: Add this to your social media bio or stream description.
             </p>
           </div>
 
-          <div className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-sm space-y-6">
+          <div className="bg-white p-6 sm:p-8 rounded-[40px] border border-slate-100 shadow-sm space-y-6">
             <div className="flex items-center gap-3">
               <Video className="h-5 w-5 text-primary" />
               <h3 className="text-xl font-bold text-primary-dark">Overlay URL</h3>
             </div>
             <p className="text-slate-500 text-sm -mt-2">Paste this into OBS/Streamlabs Browser Source</p>
 
-            <div className="flex gap-2">
-              <div className="flex-1 bg-slate-50/50 border border-slate-100 rounded-2xl p-4 flex items-center relative overflow-hidden h-14">
-                <div className="flex-1 flex gap-2 items-center">
+            <div className="flex flex-wrap sm:flex-nowrap gap-2">
+              <div className="flex-1 min-w-0 bg-slate-50/50 border border-slate-100 rounded-2xl p-4 flex items-center relative overflow-hidden h-14">
+                <div className="flex-1 flex gap-2 items-center min-w-0">
                   <div className="flex-1 text-slate-600 font-mono text-sm tracking-tight truncate overflow-hidden">
                     {showOverlay ? overlayUrl : '••••••••••••••••••••••••••••••••••••••••••••••••'}
                   </div>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 text-slate-400 hover:text-primary hover:bg-white"
+                    className="h-8 w-8 flex-shrink-0 text-slate-400 hover:text-primary hover:bg-white"
                     onClick={() => setShowOverlay(!showOverlay)}
                   >
                     <Eye className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
-              <Button onClick={() => copyToClipboard(overlayUrl, 'Overlay URL')} variant="outline" size="icon" className="h-14 w-14 rounded-2xl bg-white border-slate-100 hover:bg-[#F1F9F9] hover:border-primary/20 transition-all">
-                <Copy className="h-5 w-5 text-primary" />
-              </Button>
-              <Button onClick={() => window.open(overlayUrl, '_blank')} variant="outline" size="icon" className="h-14 w-14 rounded-2xl bg-white border-slate-100 hover:bg-[#F1F9F9] hover:border-primary/20 transition-all">
-                <ExternalLink className="h-5 w-5 text-slate-400" />
-              </Button>
+              <div className="flex gap-2">
+                <Button onClick={() => copyToClipboard(overlayUrl, 'Overlay URL')} variant="outline" size="icon" className="h-14 w-14 flex-shrink-0 rounded-2xl bg-white border-slate-100 hover:bg-[#F1F9F9] hover:border-primary/20 transition-all">
+                  <Copy className="h-5 w-5 text-primary" />
+                </Button>
+                <Button onClick={() => window.open(overlayUrl, '_blank')} variant="outline" size="icon" className="h-14 w-14 flex-shrink-0 rounded-2xl bg-white border-slate-100 hover:bg-[#F1F9F9] hover:border-primary/20 transition-all">
+                  <ExternalLink className="h-5 w-5 text-slate-400" />
+                </Button>
+              </div>
             </div>
             <div className="flex items-center gap-2 text-[10px] text-red-500 font-bold uppercase tracking-wider">
               <Zap className="h-3 w-3 fill-red-500" />
-              Never share this URL with anyone. It contains your private access token.
+              Never share this URL with anyone. It contains your authentication token.
             </div>
           </div>
 
-          <div className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-sm">
+          <div className="bg-white p-6 sm:p-8 rounded-[40px] border border-slate-100 shadow-sm">
             <div className="mb-6">
               <h3 className="text-xl font-bold text-primary-dark">Stream Controls</h3>
             </div>
@@ -502,7 +506,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Right Column: Recent Tips */}
-        <div className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-sm flex flex-col min-h-[500px]">
+        <div className="bg-white p-6 sm:p-8 rounded-[40px] border border-slate-100 shadow-sm flex flex-col min-h-[500px]">
           <div className="space-y-1 mb-8">
             <div className="flex items-center gap-3">
               <Clock className="h-5 w-5 text-primary" />
@@ -556,7 +560,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Bottom Section: Withdraw */}
-      <div className="bg-white p-10 rounded-[40px] border border-slate-100 shadow-sm relative overflow-hidden">
+      <div className="bg-white p-6 sm:p-8 lg:p-10 rounded-[40px] border border-slate-100 shadow-sm relative overflow-hidden">
         <div className="flex flex-col md:flex-row items-center justify-between gap-8">
           <div className="space-y-2 text-center md:text-left">
             <h3 className="text-2xl font-black text-primary-dark tracking-tight">Withdraw Earnings</h3>
