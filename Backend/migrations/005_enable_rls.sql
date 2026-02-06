@@ -86,12 +86,12 @@ CREATE POLICY "streams_manage_own" ON streams
   FOR ALL
   TO authenticated
   USING (
-    streamer_id IN (
+    creator_id IN (
       SELECT id FROM users WHERE wallet_address = current_setting('request.jwt.claims', true)::json->>'walletAddress'
     )
   )
   WITH CHECK (
-    streamer_id IN (
+    creator_id IN (
       SELECT id FROM users WHERE wallet_address = current_setting('request.jwt.claims', true)::json->>'walletAddress'
     )
   );
@@ -156,8 +156,8 @@ SELECT
     tablename,
     rowsecurity AS rls_enabled,
     CASE 
-        WHEN rowsecurity = true THEN '✅ RLS ENABLED'
-        ELSE '❌ RLS DISABLED'
+        WHEN rowsecurity = true THEN 'RLS ENABLED'
+        ELSE 'RLS DISABLED'
     END AS status
 FROM pg_tables 
 WHERE schemaname = 'public' 
@@ -170,4 +170,4 @@ FROM pg_policies
 WHERE schemaname = 'public'
 ORDER BY tablename, policyname;
 
-SELECT '✅ RLS enabled and policies created successfully' AS message;
+SELECT 'RLS enabled and policies created successfully' AS message;

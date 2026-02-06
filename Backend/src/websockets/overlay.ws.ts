@@ -10,7 +10,7 @@ interface OverlayWebSocketRequest {
   headers?: { authorization?: string };
 }
 
-export const handleOverlayConnection = (ws: WebSocket, req: OverlayWebSocketRequest): void => {
+export const handleOverlayConnection = async (ws: WebSocket, req: OverlayWebSocketRequest): Promise<void> => {
   // Extract creatorId from URL path /ws/overlay/{creatorId}?token=...
   const url = new URL(req.url || '', 'http://localhost');
   const pathParts = url.pathname.split('/');
@@ -34,7 +34,6 @@ export const handleOverlayConnection = (ws: WebSocket, req: OverlayWebSocketRequ
   }
 
   let payload: JwtPayload | null = null;
-  let isOverlayToken = false;
 
   // First, try to verify as overlay token (long-lived)
   try {
@@ -42,7 +41,6 @@ export const handleOverlayConnection = (ws: WebSocket, req: OverlayWebSocketRequ
     const tokenRecord = await overlayTokenModel.findByToken(accessToken);
 
     if (tokenRecord && tokenRecord.creator_id === creatorId) {
-      isOverlayToken = true;
       logger.info(`Overlay token validated for creator ${creatorId}`);
 
       // Update last used timestamp
@@ -72,6 +70,7 @@ export const handleOverlayConnection = (ws: WebSocket, req: OverlayWebSocketRequ
       return;
     }
   }
+
 
 
   overlayModel
