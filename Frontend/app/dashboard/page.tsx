@@ -506,7 +506,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Right Column: Recent Tips */}
-        <div className="bg-white p-6 sm:p-8 rounded-[40px] border border-slate-100 shadow-sm flex flex-col min-h-[500px]">
+        <div className="bg-white p-6 sm:p-8 rounded-[40px] border border-slate-100 shadow-sm flex flex-col h-[600px]">
           <div className="space-y-1 mb-8">
             <div className="flex items-center gap-3">
               <Clock className="h-5 w-5 text-primary" />
@@ -519,11 +519,21 @@ export default function DashboardPage() {
             {isLoadingTips ? (
               <div className="py-20 text-center text-slate-400 font-medium">Loading tips...</div>
             ) : recentTips.length === 0 ? (
-              <div className="py-20 text-center space-y-4">
-                <div className="w-16 h-16 bg-[#F1F9F9] rounded-full mx-auto flex items-center justify-center">
-                  <Zap className="h-8 w-8 text-primary/30" />
+              <div className="flex-1 flex flex-col items-center justify-center text-center space-y-4 px-6">
+                <div className="w-20 h-20 bg-slate-50 rounded-[32px] flex items-center justify-center mb-2 group-hover:scale-110 transition-transform duration-500">
+                  <Zap className="h-10 w-10 text-slate-200" />
                 </div>
-                <p className="text-slate-400 font-medium">No tips yet. Start streaming to receive support!</p>
+                <div className="space-y-1">
+                  <p className="text-slate-600 font-bold">No tips found</p>
+                  <p className="text-slate-400 text-xs max-w-[200px] mx-auto leading-relaxed">
+                    Once you start receiving tips, they will appear here in real-time.
+                  </p>
+                </div>
+                <Link href="/dashboard/stream">
+                  <Button variant="outline" className="mt-4 rounded-2xl border-slate-100 text-xs font-bold hover:bg-primary/5 hover:text-primary hover:border-primary/20 transition-all">
+                    Go Live Now
+                  </Button>
+                </Link>
               </div>
             ) : (
               recentTips.map((tip) => {
@@ -534,22 +544,34 @@ export default function DashboardPage() {
                 const timestamp = tip.timestamp || tip.created_at;
 
                 return (
-                  <div key={tipId} className="flex items-center justify-between p-4 rounded-3xl border border-slate-50 hover:bg-slate-50/50 transition-colors group">
+                  <div key={tipId} className="flex items-center justify-between p-4 rounded-3xl border border-slate-50 hover:bg-slate-50/50 transition-all group relative overflow-hidden">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-2xl bg-primary/5 flex items-center justify-center text-primary border border-primary/10">
+                      <div className="w-10 h-10 rounded-2xl bg-primary/5 flex items-center justify-center text-primary border border-primary/10 group-hover:bg-primary/10 transition-colors">
                         <User className="h-5 w-5" />
                       </div>
                       <div>
-                        <p className="font-bold text-slate-700 text-sm">
-                          {viewerAddress ? `${viewerAddress.slice(0, 6)}...${viewerAddress.slice(-4)}` : 'Anonymous'}
+                        <p className="font-bold text-slate-700 text-sm flex items-center gap-2">
+                          {tip.viewer?.displayName || tip.viewer?.display_name || (viewerAddress ? `${viewerAddress.slice(0, 6)}...${viewerAddress.slice(-4)}` : 'Anonymous')}
                         </p>
                         <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wide">
                           {_hasHydrated && timestamp ? new Date(timestamp).toLocaleString('en-GB', { dateStyle: 'short', timeStyle: 'short' }) : '---'}
                         </p>
                       </div>
                     </div>
-                    <div className="text-right">
+                    <div className="flex flex-col items-end gap-1">
                       <p className="font-black text-primary text-sm whitespace-nowrap">{formattedAmount} ETH</p>
+                      {tip.txHash || tip.tx_hash ? (
+                        <a
+                          href={`https://sepolia.basescan.org/tx/${tip.txHash || tip.tx_hash}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1 text-[10px] text-slate-400 hover:text-primary transition-colors font-medium"
+                        >
+                          Details <ExternalLink className="h-3 w-3" />
+                        </a>
+                      ) : (
+                        <span className="text-[10px] text-slate-300 italic font-medium">Pending...</span>
+                      )}
                     </div>
                   </div>
                 );
